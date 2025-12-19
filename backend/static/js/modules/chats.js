@@ -24,6 +24,8 @@ export async function renderChats() {
   dom.content().innerHTML = `<div class="chat-list" id="chat-list"></div>`
 
   const conversations = await fetchConversations()
+  console.log("[DEBUG Frontend] Received conversations:", conversations)
+  console.log("[DEBUG Frontend] Number of conversations:", conversations.length)
   state.allConversations = conversations
 
   const list = dom.chatList()
@@ -33,6 +35,7 @@ export async function renderChats() {
     return
   }
 
+  console.log("[DEBUG Frontend] Displaying conversations:", conversations.length)
   displayConversations(conversations, list)
 }
 
@@ -48,14 +51,14 @@ function displayConversations(conversations, list) {
     item.innerHTML = `
       <img class="chat-avatar" src="/static/avatars/${conv.other_avatar}">
       <div class="chat-meta">
-        <div class="chat-name">${conv.other_username}</div>
+        <div class="chat-name">${conv.other_display_name || conv.other_username}</div>
         <div class="chat-preview">${preview}</div>
       </div>
     `
 
     item.onclick = () => {
       state.ACTIVE_CONVERSATION_ID = conv.conversation_id
-      dom.pageTitle().innerText = conv.other_username
+      dom.pageTitle().innerText = conv.other_display_name || conv.other_username
       renderChatView()
     }
 
@@ -64,11 +67,13 @@ function displayConversations(conversations, list) {
 }
 
 function renderChatView() {
+  const username = dom.pageTitle().innerText
   dom.topBar().innerHTML = `
     <button class="back-button">
       <i class="fa-solid fa-arrow-left"></i>
       <span>Back</span>
     </button>
+    <h2 class="chat-header-title">${username}</h2>
   `
 
   dom.topBar().querySelector(".back-button").onclick = renderChats

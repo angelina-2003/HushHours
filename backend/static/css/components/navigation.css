@@ -107,6 +107,32 @@
   border-bottom: 1px solid var(--border-color);
   min-height: var(--top-bar-height);
   padding: 0 var(--spacing-lg);
+  position: relative;
+}
+
+/* Larger header for personal chats */
+.card.chat-active #top-bar {
+  height: 64px;
+  min-height: 85px;
+}
+
+/* When top bar contains back button, create horizontal layout */
+#top-bar .back-button {
+  margin-right: auto;
+  align-self: center;
+}
+
+/* Chat header title in top bar */
+#top-bar .chat-header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+  pointer-events: none;
 }
 
 .top-nav {
@@ -159,14 +185,26 @@
 
 /* Page Header */
 .page-header {
-  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-sm);
+  padding: 0 var(--spacing-lg);
   text-align: center;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--top-bar-height);
+  min-height: var(--top-bar-height);
 }
 
 .page-header h2 {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* Hide page header when in chat view (title is in top-bar) */
+.card.chat-active .page-header {
+  display: none;
 }
 

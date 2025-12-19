@@ -69,21 +69,25 @@ button:disabled {
 
 /* Chat Back Button */
 .back-button {
-  position: absolute;
-  left: var(--spacing-lg);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
   background: var(--purple-dark);
   border: 1px solid var(--purple-border);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-base);
   -webkit-tap-highlight-color: transparent;
+  width: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin: 0;
+  height: 28px;
+  line-height: 1;
 }
 
 .back-button:hover {
@@ -96,7 +100,7 @@ button:disabled {
 }
 
 .back-button i {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* Gender Button */

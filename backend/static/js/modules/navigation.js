@@ -13,7 +13,7 @@ export function initNavigation() {
     })
 }
 
-function showTab(tab) {
+export function showTab(tab) {
   if (tab === "chats") {
     dom.pageTitle().innerText = "My Chats"
     renderChats()

@@ -1,7 +1,12 @@
+
+console.log("APP.JS DEFINITELY LOADED");
+
 import {state} from "./state.js"
 import {fetchMe} from "./modules/api.js"
 import { initNavigation, showTab } from "./modules/navigation.js"
 import { dom } from "./utils/dom.js"
+
+console.log("APP.JS LOADED")
 
 async function initUser(){
   const data = await fetchMe()
@@ -17,4 +22,3 @@ async function initUser(){
 initUser()
 initNavigation()
 showTab("chats")
-
