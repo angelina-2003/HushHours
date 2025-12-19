@@ -1,0 +1,90 @@
+/* ============================================
+   INPUT COMPONENTS
+   ============================================ */
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: 16px;
+  border: 1px solid var(--border-color-dark);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary) !important;
+  margin-bottom: var(--spacing-xl);
+  transition: all var(--transition-slow);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: var(--purple-primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  opacity: 1;
+}
+
+/* Range Slider */
+input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: var(--border-color-dark);
+  outline: none;
+  margin: var(--spacing-3xl) 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.2);
+}
+
+/* Age Value Display */
+#age_value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--purple-light);
+  margin: var(--spacing-xl) 0;
+  text-align: center;
+}
+

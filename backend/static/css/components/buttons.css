@@ -1,0 +1,131 @@
+/* ============================================
+   BUTTON COMPONENTS
+   ============================================ */
+
+/* Primary Button */
+button {
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: var(--text-white);
+  cursor: pointer;
+  transition: all var(--transition-slow);
+  margin-top: var(--spacing-sm);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  box-shadow: var(--shadow-lg);
+}
+
+button:active {
+  transform: scale(0.98);
+  opacity: 0.95;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Secondary Button */
+.secondary_btn {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color-dark);
+  margin-top: var(--spacing-md);
+}
+
+.secondary_btn:active {
+  background: var(--bg-card);
+  transform: scale(0.98);
+  opacity: 1;
+}
+
+/* Back Button */
+.back_btn {
+  position: absolute;
+  top: var(--spacing-xl);
+  left: var(--spacing-xl);
+  width: auto;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: 16px;
+  font-weight: 600;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color-dark);
+  margin: 0;
+  z-index: var(--z-nav);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.back_btn:active {
+  background: var(--bg-card);
+  transform: scale(0.95);
+  opacity: 1;
+}
+
+/* Chat Back Button */
+.back-button {
+  position: absolute;
+  left: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--purple-dark);
+  border: 1px solid var(--purple-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-button:hover {
+  background: rgba(139, 92, 246, 0.25);
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: translateX(-1px) scale(0.98);
+}
+
+.back-button i {
+  font-size: 16px;
+}
+
+/* Gender Button */
+.gender_btn {
+  width: 100%;
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  font-size: 17px;
+  font-weight: 600;
+  border: 1px solid var(--border-color-dark);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  transition: all var(--transition-slow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.gender_btn:active {
+  transform: scale(0.98);
+}
+
+.gender_btn.selected {
+  background: var(--gradient-primary);
+  color: var(--text-white);
+  border-color: transparent;
+}
+
+/* Next Button for Gender Screen */
+.next_gender_btn {
+  margin-top: var(--spacing-xl);
+}
+

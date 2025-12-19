@@ -1,0 +1,19 @@
+/* ============================================
+   CARD COMPONENT
+   ============================================ */
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-2xl);
+  width: 100%;
+  max-width: var(--card-max-width);
+  height: 100vh;
+  max-height: var(--card-max-height);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+

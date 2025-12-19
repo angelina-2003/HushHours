@@ -1,0 +1,80 @@
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile-only refinements */
+@media (max-width: 480px) {
+  .card {
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .app-content {
+    padding: var(--spacing-lg);
+    padding-bottom: 90px;
+  }
+
+  .chat-list {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+  }
+
+  .chat-item {
+    padding: var(--spacing-md);
+    border-radius: var(--spacing-md);
+  }
+
+  .chat-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .chat-name {
+    font-size: 15px;
+  }
+
+  .chat-preview {
+    font-size: 12px;
+  }
+
+  .chat-input {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 375px) {
+  .card {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .screen {
+    padding: var(--spacing-3xl) var(--spacing-xl);
+  }
+  
+  h2 {
+    font-size: 24px;
+    margin-bottom: var(--spacing-3xl);
+  }
+  
+  h2:not(#screen_choice h2) {
+    margin-bottom: var(--spacing-3xl);
+  }
+  
+  #screen_choice h2 {
+    font-size: 36px;
+    margin-bottom: 60px;
+  }
+  
+  .back_btn {
+    top: 15px;
+    left: 15px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 15px;
+  }
+}
+

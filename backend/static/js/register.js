@@ -7,10 +7,17 @@ var registerData = {
     avatar: "panther.png"
 }
 
+var navState = {
+  current: "screen_choice",
+  history: ["screen_choice"]
+}
+
+function $(id) {
+  return document.getElementById(id)
+}
+
+
 var screens = document.querySelectorAll(".screen")      // collect all screens
-var screenHistory = []          // keeps track of navigation history
-var selectedGender = ""         // store selected gender
-var isGoingBack = false         // helps us detect back navigation
 
 var avatarOptions = document.querySelectorAll(".avatar_option")
 var confirmAvatarBtn = document.getElementById("confirm_avatar")
@@ -18,43 +25,38 @@ var avatarList = document.querySelector(".avatar_list")
 var avatarScrollTimeout = null
 
 
-// show one screen and hide others
-function show_screen(id) {
+function show_screen(id, goingBack = false) {
   for (var i = 0; i < screens.length; i++) {
     screens[i].style.display = "none"
   }
 
-  document.getElementById(id).style.display = "flex"
+  var target = document.getElementById(id)
+  if (!target) return
 
-  // add screen to history only when moving forward
-  if (!isGoingBack && (screenHistory.length === 0 || screenHistory[screenHistory.length - 1] !== id)) {
-    screenHistory.push(id)
+  target.style.display = "flex"
+
+  if (!goingBack && navState.history[navState.history.length - 1] !== id) {
+    navState.history.push(id)
   }
 
-  isGoingBack = false
-
-  // reset gender screen state
-  if (id === "screen_gender") {
-    for (var j = 0; j < genderButtons.length; j++) {
-      genderButtons[j].classList.remove("selected")
-    }
-    nextToAgeButton.disabled = true
-    selectedGender = ""
-  }
+  navState.current = id
 }
 
-// back navigation
+
 function go_back() {
-  if (screenHistory.length > 1) {
-    isGoingBack = true
-    screenHistory.pop()
-    var previousScreen = screenHistory[screenHistory.length - 1]
-    show_screen(previousScreen)
-  } else {
-    show_screen("screen_choice")
-    screenHistory = ["screen_choice"]
+  if (navState.history.length > 1) {
+    navState.history.pop()
+    show_screen(navState.history[navState.history.length - 1], true)
   }
 }
+
+
+document.addEventListener("click", function (e) {
+  if (e.target.matches("[data-action='back']")) {
+    go_back()
+  }
+})
+
 
 // forward navigation handlers
 
@@ -68,14 +70,14 @@ document.getElementById("go_register").onclick = function () {
 
 
 document.getElementById("next_to_password").onclick = function () {
-    registerData.username = document.getElementById("username").value
-    registerData.display_name = document.getElementById("display_name").value
+    registerData.username = $("username").value
+    registerData.display_name = $("display_name").value
   
     show_screen("screen_password")
 }
 
 document.getElementById("next_to_gender").onclick = function () {
-    registerData.password = document.getElementById("password").value
+    registerData.password = $("password").value
     show_screen("screen_gender")
 }
 
@@ -95,8 +97,8 @@ for (var i = 0; i < genderButtons.length; i++) {
     }
 
     this.classList.add("selected")
-    selectedGender = this.getAttribute("data_gender")
-    registerData.gender = selectedGender
+    registerData.gender = this.getAttribute("data_gender")
+
     nextToAgeButton.disabled = false
   }
 }
@@ -106,13 +108,17 @@ nextToAgeButton.onclick = function () {
 }
 
 // age slider logic
-var ageSlider = document.getElementById("age")
-var ageValue = document.getElementById("age_value")
+var ageSlider = $("age")
+var ageValue = $("age_value")
 
 ageSlider.oninput = function () {
     ageValue.innerText = ageSlider.value
     registerData.age = ageSlider.value
 }
+
+
+
+
 
 // ----- Avatar carousel logic -----
 
@@ -236,7 +242,7 @@ document.getElementById("confirm_avatar").onclick = function () {
     return
   }
 
-  fetch("http://127.0.0.1:5000/register", {
+  fetch("/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -270,7 +276,7 @@ document.getElementById("login_submit").onclick = function () {
   }
 
 
-  fetch("http://127.0.0.1:5000/login", {
+  fetch("/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -299,4 +305,4 @@ document.getElementById("login_submit").onclick = function () {
 
 // initial screen
 show_screen("screen_choice")
-screenHistory = ["screen_choice"]
+
