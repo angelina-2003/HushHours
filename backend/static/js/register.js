@@ -248,7 +248,7 @@ document.getElementById("confirm_avatar").onclick = function () {
   })
   .then(function (data) {
     if (data.success) {
-      show_screen("screen_success")
+      window.location.href = "/app"
     } else {
       alert(data.error || "Registration failed")
     }
@@ -275,6 +275,7 @@ document.getElementById("login_submit").onclick = function () {
     headers: {
       "Content-Type": "application/json"
     },
+    credentials:"include",
     body: JSON.stringify({
       username: username,
       password: password
@@ -285,7 +286,7 @@ document.getElementById("login_submit").onclick = function () {
   })
   .then(function (data) {
     if (data.success) {
-      show_screen("screen_success")
+      window.location.href = "/app"
     } else {
       alert(data.error || "Invalid username or password")
     }

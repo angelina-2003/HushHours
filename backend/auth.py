@@ -28,45 +28,74 @@ def register_user(username, display_name, age, gender, password, avatar):
         """
         INSERT INTO users (username, display_name, password, avatar_key, age, gender, points)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (username, display_name, hashed_password_str, avatar, age, gender, 0)
     )
 
+    user_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
     conn.close()
 
-    return True, "Registration successful"
+    return True, user_id
 
 
 def login_user(username, password):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""SELECT password FROM users WHERE username = %s""", (username,))
+    cur.execute(
+        "SELECT id, password, avatar_key FROM users WHERE username = %s",
+        (username,)
+    )
 
     row = cur.fetchone()
-
-    if not row:
-        cur.close()
-        conn.close()
-        return False, "Invalid username or password"
-
-    stored_hashed_password = row[0]
-
-    # Step 2: compare entered password with stored hash
-    password_bytes = password.encode("utf-8")
-    stored_hash_bytes = stored_hashed_password.encode("utf-8")
-
-    is_correct = bcrypt.checkpw(
-        password_bytes,
-        stored_hash_bytes
-    )
 
     cur.close()
     conn.close()
 
-    if is_correct:
-        return True, "Login successful"
-    else:
-        return False, "Invalid username or password"
+    if not row:
+        return False, None
+
+    user_id = row[0]
+    stored_hashed_password = row[1]
+    avatar_key = row[2]
+
+    password_bytes = password.encode("utf-8")
+    stored_hash_bytes = stored_hashed_password.encode("utf-8")
+
+    is_correct = bcrypt.checkpw(password_bytes, stored_hash_bytes)
+
+    if not is_correct:
+        return False, None
+
+    return True, {
+        "id": user_id,
+        "avatar": avatar_key
+    }
+
+
+
+def get_user_by_id(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id, username, avatar_key FROM users WHERE id = %s",
+        (user_id,)
+    )
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "username": row[1],
+        "avatar": row[2]
+    }

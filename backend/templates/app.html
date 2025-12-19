@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HushHours</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+</head>
+
+<body>
+  <div class="card">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h2 id="page-title">My Chats</h2>
+    </div>
+
+    <!-- DYNAMIC TOP BAR -->
+    <div id="top-bar">
+        <div class="top-item active" data-top="all">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+
+        <div class="top-item" data-top="groups">
+            <i class="fa-solid fa-users"></i>
+        </div>
+
+        <div class="top-item" data-top="private">
+            <i class="fa-solid fa-user-lock"></i>
+        </div>
+
+        <div class="top-item" data-top="liked">
+            <i class="fa-solid fa-heart"></i>
+        </div>
+    </div>
+
+    <!-- DYNAMIC MAIN CONTENT -->
+    <div class="app-content" id="app-content"></div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" data-tab="chats">
+            <i class="fa-solid fa-comments"></i>
+            <span>Chats</span>
+        </div>
+
+        <div class="nav-item" data-tab="groups">
+            <i class="fa-solid fa-users"></i>
+            <span>Groups</span>
+        </div>
+
+        <div class="nav-item avatar-nav" data-tab="avatar">
+            <img src="" alt="avatar" />
+        </div>
+
+        <div class="nav-item" data-tab="friends">
+            <i class="fa-solid fa-book"></i>
+            <span>Friends</span>
+        </div>
+
+        <div class="nav-item" data-tab="settings">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </div>
+    </div>
+
+ 
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+
+</body>
+
+
+</html>
+
+
