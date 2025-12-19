@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+</head>
+
+<body>
+
+  <div class="card">
+
+    <div class="screen" id="screen_choice">
+      <h2>HushHours</h2>
+        <button id="go_login" class="secondary_btn">Login</button>
+      <button id="go_register">Register</button>
+    </div>
+
+    <div class="screen" id="screen_login">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+      <h2>Login</h2>
+      <input type="text" id="login_username" placeholder="Username">
+      <input type="password" id="login_password" placeholder="Password">
+      <button id="login_submit">Login</button>
+    </div>
+
+    <div class="screen" id="screen_username">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+      <h2>Create account</h2>
+      <input type="text" id="username" placeholder="Username">
+      <input type="text" id="display_name" placeholder="Display name">
+      <button id="next_to_password">Next</button>
+    </div>
+
+    <div class="screen" id="screen_password">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+      <h2>Password</h2>
+      <input type="password" id="password">
+      <button id="next_to_gender">Next</button>
+    </div>
+
+    <div class="screen" id="screen_gender">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+      <h2>Select gender</h2>
+
+      <button class="gender_btn" data_gender="female">Female</button>
+      <button class="gender_btn" data_gender="male">Male</button>
+      <button class="gender_btn" data_gender="other">Other</button>
+      <button id="next_to_age" class="next_gender_btn" disabled>Next</button>
+    </div>
+
+    <div class="screen" id="screen_age">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+      <h2>Select age</h2>
+
+      <input type="range" id="age" min="13" max="100" value="18">
+      <p id="age_value">18</p>
+
+      <button id="finish_register">Finish</button>
+    </div>
+
+    <div class="screen" id="screen_avatar">
+      <button class="back_btn" onclick="go_back()">← Back</button>
+
+      <h2>Choose your avatar</h2>
+
+      <div class="avatar_list">
+        <button class="avatar_option" data_avatar="brownbear.png">
+          <img src="{{ url_for('static', filename='avatars/brownbear.png') }}" alt="Brown Bear avatar">
+        </button>
+        <button class="avatar_option" data_avatar="cat.png">
+          <img src="{{ url_for('static', filename='avatars/cat.png') }}" alt="Cat avatar">
+        </button>
+        <button class="avatar_option" data_avatar="cow.png">
+          <img src="{{ url_for('static', filename='avatars/cow.png') }}" alt="Cow avatar">
+        </button>
+        <button class="avatar_option" data_avatar="gorilla.png">
+          <img src="{{ url_for('static', filename='avatars/gorilla.png') }}" alt="Gorilla avatar">
+        </button>
+        <button class="avatar_option" data_avatar="lion.png">
+          <img src="{{ url_for('static', filename='avatars/lion.png') }}" alt="Lion avatar">
+        </button>
+        <button class="avatar_option" data_avatar="panda.png">
+          <img src="{{ url_for('static', filename='avatars/panda.png') }}" alt="Panda avatar">
+        </button>
+        <button class="avatar_option" data_avatar="panther.png">
+          <img src="{{ url_for('static', filename='avatars/panther.png') }}" alt="Panther avatar">
+        </button>
+        <button class="avatar_option" data_avatar="smalldog.png">
+          <img src="{{ url_for('static', filename='avatars/smalldog.png') }}" alt="Dog avatar">
+        </button>
+      </div>
+
+      <button id="confirm_avatar">Finish</button>
+    </div>
+
+
+    <div class="screen" id="screen_success">
+      <h2>Account created</h2>
+      <p>You can now continue</p>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/register.js') }}"></script>
+</body>
+</html>

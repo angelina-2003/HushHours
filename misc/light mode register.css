@@ -1,0 +1,341 @@
+/* Mobile-first registration page styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  min-height: 600px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  display: none;
+  padding: 40px 30px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.4s ease-in-out;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h2 {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  margin: 20px 0 40px 0;
+  color: #2d3748;
+}
+
+h2:not(#screen_choice h2) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-top: 20px;
+}
+
+p {
+  font-size: 16px;
+  color: #718096;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f7fafc;
+  color: #2d3748 !important;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-text-fill-color: #2d3748 !important;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #667eea;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  color: #2d3748 !important;
+  -webkit-text-fill-color: #2d3748 !important;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+  color: #a0aec0 !important;
+  -webkit-text-fill-color: #a0aec0 !important;
+  opacity: 1;
+}
+
+/* Button styles */
+button {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Gender button styles */
+.gender_btn {
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #4a5568;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.gender_btn:active {
+  transform: scale(0.98);
+}
+
+.gender_btn.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Next button for gender screen */
+.next_gender_btn {
+  margin-top: 20px;
+}
+
+/* Range slider styles */
+input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #e2e8f0;
+  outline: none;
+  margin: 30px 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.2);
+}
+
+#age_value {
+  font-size: 48px;
+  font-weight: 700;
+  color: #667eea;
+  margin: 20px 0;
+  text-align: center;
+}
+
+/* Success screen */
+#screen_success h2 {
+  color: #48bb78;
+  margin-bottom: 20px;
+}
+
+#screen_success p {
+  color: #718096;
+  font-size: 17px;
+}
+
+/* Back button styles */
+.back_btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: auto;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #f7fafc;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  margin: 0;
+  z-index: 10;
+}
+
+.back_btn:active {
+  background: #edf2f7;
+  transform: scale(0.95);
+  opacity: 1;
+}
+
+/* Secondary button (for change option) */
+.secondary_btn {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  margin-top: 12px;
+}
+
+.secondary_btn:active {
+  background: #edf2f7;
+  transform: scale(0.98);
+  opacity: 1;
+}
+
+/* Welcome screen */
+#screen_choice h2 {
+  margin-bottom: 60px;
+  margin-top: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  color: #667eea;
+}
+
+/* Responsive adjustments */
+@media (max-width: 375px) {
+  .card {
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .screen {
+    padding: 30px 20px;
+  }
+  
+  h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+  }
+  
+  h2:not(#screen_choice h2) {
+    margin-bottom: 30px;
+  }
+  
+  #screen_choice h2 {
+    font-size: 36px;
+    margin-bottom: 60px;
+  }
+  
+  .back_btn {
+    top: 15px;
+    left: 15px;
+    padding: 8px 14px;
+    font-size: 15px;
+  }
+}
+
+/* Ensure proper spacing for all screens */
+#screen_username input,
+#screen_password input {
+  margin-bottom: 20px;
+}
+
+#screen_username button,
+#screen_password button {
+  margin-top: 10px;
+}
+
+#screen_gender {
+  gap: 12px;
+}
+
+#screen_age {
+  gap: 20px;
+}
+

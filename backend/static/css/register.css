@@ -1,0 +1,404 @@
+/* Mobile-first registration page styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.25), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(124, 58, 237, 0.2), transparent 32%),
+    linear-gradient(160deg, #0b1220 0%, #0f172a 40%, #020617 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.card {
+  background: #020617;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  min-height: 600px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.screen {
+  display: none;
+  padding: 40px 30px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.4s ease-in-out;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+h2 {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  margin: 20px 0 40px 0;
+  color: #e2e8f0;
+}
+
+h2:not(#screen_choice h2) {
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-top: 20px;
+}
+
+p {
+  font-size: 16px;
+  color: #cbd5e1;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 16px;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  background: #020617;
+  color: #e2e8f0 !important;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #8b5cf6;
+  background: #020617;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1;
+}
+
+/* Button styles */
+button {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  box-shadow: 0 10px 30px rgba(88, 28, 135, 0.45);
+}
+
+button:active {
+  transform: scale(0.98);
+  opacity: 0.95;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Gender button styles */
+.gender_btn {
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  background: #020617;
+  color: #e5e7eb;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.gender_btn:active {
+  transform: scale(0.98);
+}
+
+.gender_btn.selected {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: #f9fafb;
+  border-color: transparent;
+}
+
+/* Next button for gender screen */
+.next_gender_btn {
+  margin-top: 20px;
+}
+
+/* Range slider styles */
+input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #1f2937;
+  outline: none;
+  margin: 30px 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.45);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.45);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.2);
+}
+
+#age_value {
+  font-size: 48px;
+  font-weight: 700;
+  color: #a78bfa;
+  margin: 20px 0;
+  text-align: center;
+}
+
+/* Success screen */
+#screen_success h2 {
+  color: #34d399;
+  margin-bottom: 20px;
+}
+
+#screen_success p {
+  color: #cbd5e1;
+  font-size: 17px;
+}
+
+/* Back button styles */
+.back_btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: auto;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  margin: 0;
+  z-index: 10;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.back_btn:active {
+  background: #020617;
+  transform: scale(0.95);
+  opacity: 1;
+}
+
+/* Secondary button (for change option) */
+.secondary_btn {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  margin-top: 12px;
+}
+
+.secondary_btn:active {
+  background: #020617;
+  transform: scale(0.98);
+  opacity: 1;
+}
+
+/* Welcome screen */
+#screen_choice h2 {
+  margin-bottom: 60px;
+  margin-top: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  color: #e5e7eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 375px) {
+  .card {
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .screen {
+    padding: 30px 20px;
+  }
+  
+  h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+  }
+  
+  h2:not(#screen_choice h2) {
+    margin-bottom: 30px;
+  }
+  
+  #screen_choice h2 {
+    font-size: 36px;
+    margin-bottom: 60px;
+  }
+  
+  .back_btn {
+    top: 15px;
+    left: 15px;
+    padding: 8px 14px;
+    font-size: 15px;
+  }
+}
+
+/* Ensure proper spacing for all screens */
+#screen_username input,
+#screen_password input {
+  margin-bottom: 20px;
+}
+
+#screen_username button,
+#screen_password button {
+  margin-top: 10px;
+}
+
+#screen_gender {
+  gap: 12px;
+}
+
+#screen_age {
+  gap: 20px;
+}
+
+.avatar_list {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 30px calc(50% - 45px) 50px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.avatar_option {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  width: 90px;
+  height: 90px;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.avatar_option.selected {
+  border-color: transparent;
+  box-shadow: 0 0 30px rgba(129, 140, 248, 0.9);
+}
+
+
+.avatar_option img {
+  max-width: 88%;
+  max-height: 88%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Subtle spotlight glow behind the selected avatar */
+.avatar_option::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 30%, rgba(129, 140, 248, 0.7), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: -1;
+}
+
+.avatar_option.selected::before {
+  opacity: 1;
+}
