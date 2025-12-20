@@ -130,9 +130,21 @@ function displayConversations(conversations, list) {
   })
 }
 
-function renderChatView() {
-  const username = dom.pageTitle().innerText
-  dom.topBar().innerHTML = `
+export function renderChatView() {
+  // Show top bar for chat view
+  const topBar = dom.topBar()
+  if (!topBar) {
+    console.error("[DEBUG chats] Top bar not found!")
+    return
+  }
+  
+  topBar.style.display = "flex"
+  
+  // Get username from page title or use a default
+  const pageTitleEl = dom.pageTitle()
+  const username = (pageTitleEl && pageTitleEl.innerText) ? pageTitleEl.innerText : "Chat"
+  
+  topBar.innerHTML = `
     <button class="back-button">
       <i class="fa-solid fa-arrow-left"></i>
       <span>Back</span>
@@ -140,7 +152,22 @@ function renderChatView() {
     <h2 class="chat-header-title">${username}</h2>
   `
 
-  dom.topBar().querySelector(".back-button").onclick = renderChats
+  topBar.querySelector(".back-button").onclick = async () => {
+    // If we came from friends, go back to friends, otherwise go to chats
+    if (state.CAME_FROM_FRIENDS) {
+      state.CAME_FROM_FRIENDS = false
+      const { renderFriends } = await import("./friends.js")
+      await renderFriends()
+      // Update navigation to show friends tab as active
+      const friendsTab = document.querySelector('.nav-item[data-tab="friends"]')
+      if (friendsTab) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'))
+        friendsTab.classList.add('active')
+      }
+    } else {
+      renderChats()
+    }
+  }
 
   const card = document.querySelector(".card")
   const bottomNav = document.querySelector(".bottom-nav")

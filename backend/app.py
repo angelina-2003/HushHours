@@ -20,6 +20,8 @@ def home():
 
 @app.route("/app")
 def app_page():
+    # Always allow access - let frontend handle authentication
+    # The frontend will check /me endpoint and redirect if needed
     return render_template("app.html")
 
 

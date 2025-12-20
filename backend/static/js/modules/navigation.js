@@ -1,5 +1,7 @@
 import { renderChats } from "./chats.js"
 import { renderProfile } from "./profile.js"
+import { renderFriends } from "./friends.js"
+import { renderSettings } from "./settings.js"
 import { dom } from "../utils/dom.js"
 
 const navItems = document.querySelectorAll(".nav-item")
@@ -47,14 +49,13 @@ export function showTab(tab) {
 
   if (tab === "friends") {
     dom.pageTitle().innerText = "Friends"
-    dom.content().className = "app-content"
-    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Friends coming soon</p>"
+    renderFriends()
     return
   }
 
   if (tab === "settings") {
     dom.pageTitle().innerText = "Settings"
-    dom.content().className = "app-content"
-    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Settings coming soon</p>"
+    renderSettings()
+    return
   }
 }

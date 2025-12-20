@@ -52,3 +52,9 @@ def login():
     session["user_id"] = user["id"]
     return jsonify({"success": True})
 
+
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"success": True})
+

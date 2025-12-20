@@ -19,3 +19,5 @@
 /* Pages */
 @import 'pages/app.css';
 @import 'pages/profile.css';
+@import 'pages/friends.css';
+@import 'pages/settings.css';

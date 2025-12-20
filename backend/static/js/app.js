@@ -12,7 +12,9 @@ async function initUser(){
   try {
     const data = await fetchMe()
     if (!data || !data.id) {
-      console.error("[DEBUG] Failed to fetch user data")
+      console.error("[DEBUG] Failed to fetch user data - redirecting to login")
+      // Redirect to login if not authenticated
+      window.location.href = "/"
       return
     }
     
