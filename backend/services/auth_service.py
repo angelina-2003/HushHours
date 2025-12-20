@@ -1,5 +1,6 @@
 import bcrypt
 from database import get_connection
+from services.gift_service import get_user_gifts
 
 
 def register_user(username, display_name, age, gender, password, avatar):
@@ -82,7 +83,7 @@ def get_user_by_id(user_id):
     cur = conn.cursor()
 
     cur.execute(
-        "SELECT id, username, avatar_key FROM users WHERE id = %s",
+        "SELECT id, username, display_name, avatar_key, age, gender, points FROM users WHERE id = %s",
         (user_id,)
     )
 
@@ -94,8 +95,20 @@ def get_user_by_id(user_id):
     if not row:
         return None
 
+    # Get user gifts (with error handling)
+    try:
+        gifts = get_user_gifts(row[0])
+    except Exception as e:
+        print(f"[DEBUG auth_service] Error getting gifts: {e}")
+        gifts = {}
+
     return {
         "id": row[0],
         "username": row[1],
-        "avatar": row[2]
+        "display_name": row[2],
+        "avatar": row[3],
+        "age": row[4],
+        "gender": row[5],
+        "hush_points": row[6] or 0,
+        "gifts": gifts
     }

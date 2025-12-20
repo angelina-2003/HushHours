@@ -1,4 +1,5 @@
 import { renderChats } from "./chats.js"
+import { renderProfile } from "./profile.js"
 import { dom } from "../utils/dom.js"
 
 const navItems = document.querySelectorAll(".nav-item")
@@ -14,32 +15,46 @@ export function initNavigation() {
 }
 
 export function showTab(tab) {
+  const topBar = dom.topBar()
+  
   if (tab === "chats") {
+    // Show top bar only for chats
+    if (topBar) {
+      topBar.style.display = "flex"
+    }
     dom.pageTitle().innerText = "My Chats"
     renderChats()
     return
   }
 
+  // Hide top bar for all other tabs
+  if (topBar) {
+    topBar.style.display = "none"
+  }
+
   if (tab === "groups") {
     dom.pageTitle().innerText = "Groups"
-    renderGroups()
+    dom.content().className = "app-content"
+    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Groups coming soon</p>"
     return
   }
 
   if (tab === "avatar") {
-    dom.pageTitle().innerText = "Your Avatar"
-    renderAvatar()
+    dom.pageTitle().innerText = "Profile"
+    renderProfile()
     return
   }
 
   if (tab === "friends") {
     dom.pageTitle().innerText = "Friends"
-    renderFriends()
+    dom.content().className = "app-content"
+    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Friends coming soon</p>"
     return
   }
 
   if (tab === "settings") {
     dom.pageTitle().innerText = "Settings"
-    renderSettings()
+    dom.content().className = "app-content"
+    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Settings coming soon</p>"
   }
 }
