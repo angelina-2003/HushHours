@@ -97,7 +97,8 @@ for (var i = 0; i < genderButtons.length; i++) {
     }
 
     this.classList.add("selected")
-    registerData.gender = this.getAttribute("data_gender")
+    // Try both data-gender and data_gender for compatibility
+    registerData.gender = this.getAttribute("data-gender") || this.getAttribute("data_gender")
 
     nextToAgeButton.disabled = false
   }
@@ -241,6 +242,9 @@ document.getElementById("confirm_avatar").onclick = function () {
     alert("Please select an avatar")
     return
   }
+
+  // Debug: Log registration data before sending
+  console.log("[DEBUG register] Sending registration data:", registerData)
 
   fetch("/register", {
     method: "POST",

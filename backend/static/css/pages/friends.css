@@ -21,6 +21,7 @@
   border: 1px solid var(--border-color-light);
   border-radius: var(--radius-lg);
   padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 40px;
   transition: all var(--transition-base);
 }
 
@@ -34,6 +35,9 @@
   color: var(--text-tertiary);
   margin-right: var(--spacing-sm);
   font-size: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .friends-search-box input {
@@ -44,6 +48,12 @@
   font-size: 14px;
   outline: none;
   padding: 0;
+  margin: 0;
+  line-height: 40px;
+  height: 40px;
+  display: block;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 .friends-search-box input::placeholder {

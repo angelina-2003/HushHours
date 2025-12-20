@@ -1,5 +1,5 @@
 import { state } from "../state.js"
-import { fetchConversations, likeConversation, unlikeConversation } from "./api.js"
+import { fetchConversations, likeConversation, unlikeConversation, likeGroup, unlikeGroup } from "./api.js"
 import { loadMessages, sendMessage } from "./messages.js"
 import { dom } from "../utils/dom.js"
 
@@ -14,6 +14,26 @@ export async function renderChats() {
   `
 
   setupTopNav()
+  
+  // Add create group button to page header (right of "My Chats")
+  const pageHeader = document.querySelector(".page-header")
+  if (pageHeader) {
+    // Remove existing button if any
+    const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+    if (existingBtn) {
+      existingBtn.remove()
+    }
+    
+    // Add new button
+    const createBtn = document.createElement("button")
+    createBtn.className = "create-group-header-btn"
+    createBtn.id = "create-group-header-btn"
+    createBtn.title = "Create Group"
+    createBtn.innerHTML = '<i class="fa-solid fa-plus"></i>'
+    pageHeader.appendChild(createBtn)
+    setupCreateGroupButton()
+  }
+  setupCreateGroupButton()
 
   const card = document.querySelector(".card")
   const bottomNav = document.querySelector(".bottom-nav")
@@ -27,6 +47,15 @@ export async function renderChats() {
   console.log("[DEBUG Frontend] Received conversations:", conversations)
   console.log("[DEBUG Frontend] Number of conversations:", conversations.length)
   
+  // Debug: Log each conversation
+  conversations.forEach((conv, i) => {
+    if (conv.is_group) {
+      console.log(`  ${i+1}. Group ${conv.group_id}: ${conv.other_display_name}`)
+    } else {
+      console.log(`  ${i+1}. Conversation ${conv.conversation_id} with ${conv.other_display_name || conv.other_username} (user_id: ${conv.other_user_id}), last_msg_time: ${conv.last_message_time}`)
+    }
+  })
+  
   // CRITICAL: Sort conversations by last_message_time (most recent first)
   // This ensures chats with the most recent messages appear at the top
   const sortedConversations = [...conversations].sort((a, b) => {
@@ -37,13 +66,19 @@ export async function renderChats() {
     if (timeA > timeB) return -1
     if (timeA < timeB) return 1
     
-    // If times are equal, sort by conversation_id DESC (newer conversations first)
-    return (b.conversation_id || 0) - (a.conversation_id || 0)
+    // If times are equal, sort by ID (conversation_id for personal chats, group_id for groups)
+    const idA = a.conversation_id || a.group_id || 0
+    const idB = b.conversation_id || b.group_id || 0
+    return idB - idA  // Newer IDs first
   })
   
   console.log("[DEBUG Frontend] Sorted conversations by last_message_time:")
   sortedConversations.forEach((conv, i) => {
-    console.log(`  ${i+1}. Conversation ${conv.conversation_id} with ${conv.other_display_name || conv.other_username} - last_message_time: ${conv.last_message_time}`)
+    if (conv.is_group) {
+      console.log(`  ${i+1}. Group ${conv.group_id}: ${conv.other_display_name} - last_message_time: ${conv.last_message_time}`)
+    } else {
+      console.log(`  ${i+1}. Conversation ${conv.conversation_id} with ${conv.other_display_name || conv.other_username} (user_id: ${conv.other_user_id}) - last_message_time: ${conv.last_message_time}`)
+    }
   })
   
   state.allConversations = sortedConversations
@@ -61,68 +96,155 @@ export async function renderChats() {
 
 function displayConversations(conversations, list) {
   list.innerHTML = ""
+  
+  console.log("[DEBUG displayConversations] Displaying", conversations.length, "conversations")
+  
+  // Filter out any null or invalid conversations
+  const validConversations = conversations.filter(conv => {
+    // Groups are valid even without conversation_id
+    if (conv.is_group) return true
+    // Personal chats must have conversation_id
+    if (!conv.conversation_id) {
+      console.warn("[DEBUG displayConversations] Skipping conversation without ID:", conv)
+      return false
+    }
+    return true
+  })
+  
+  console.log("[DEBUG displayConversations] Valid conversations:", validConversations.length)
 
-  conversations.forEach(conv => {
+  validConversations.forEach((conv, index) => {
+    console.log(`[DEBUG displayConversations] Rendering item ${index + 1}:`, conv.is_group ? `Group ${conv.group_id}: ${conv.other_display_name}` : `Conversation ${conv.conversation_id} with ${conv.other_display_name || conv.other_username}`)
+    
     const item = document.createElement("div")
     item.className = "chat-item"
-    item.setAttribute("data-conversation-id", conv.conversation_id)
+    item.setAttribute("data-conversation-id", conv.conversation_id || "group-" + conv.group_id)
 
     const preview = conv.last_message_content || "Tap to open chat"
     const isLiked = conv.is_liked || false
     const heartClass = isLiked ? "chat-heart liked" : "chat-heart"
 
-    item.innerHTML = `
-      <img class="chat-avatar" src="/static/avatars/${conv.other_avatar}">
-      <div class="chat-meta">
-        <div class="chat-name">${conv.other_display_name || conv.other_username}</div>
-        <div class="chat-preview">${preview}</div>
-      </div>
-      <i class="fa-solid fa-heart ${heartClass}" data-conversation-id="${conv.conversation_id}"></i>
-    `
+    // Check if it's a group
+    const isGroup = conv.is_group || false
+    
+    if (isGroup) {
+      // Extract emoji from group name or use random emoji
+      const emoji = extractEmoji(conv.other_display_name) || getRandomEmoji(conv.group_id)
+      const isLikedGroup = conv.is_liked || false
+      const heartClassGroup = isLikedGroup ? "chat-heart liked" : "chat-heart"
+      // Group chat item
+      item.innerHTML = `
+        <div class="chat-avatar group-avatar-emoji">
+          ${emoji}
+        </div>
+        <div class="chat-meta">
+          <div class="chat-name">${conv.other_display_name}</div>
+          <div class="chat-preview">${preview}</div>
+        </div>
+        <i class="fa-solid fa-heart ${heartClassGroup}" data-group-id="${conv.group_id}"></i>
+      `
+    } else {
+      // Personal chat item
+      const avatarSrc = conv.other_avatar ? `/static/avatars/${conv.other_avatar}` : '/static/avatars/default.png'
+      item.innerHTML = `
+        <img class="chat-avatar" src="${avatarSrc}" onerror="this.src='/static/avatars/default.png'">
+        <div class="chat-meta">
+          <div class="chat-name">${conv.other_display_name || conv.other_username}</div>
+          <div class="chat-preview">${preview}</div>
+        </div>
+        <i class="fa-solid fa-heart ${heartClass}" data-conversation-id="${conv.conversation_id}"></i>
+      `
+    }
 
     // Click on chat item (not heart) to open chat
-    item.onclick = (e) => {
+    item.onclick = async (e) => {
       // Don't open chat if clicking on heart
       if (e.target.closest('.chat-heart')) {
         return
       }
-      state.ACTIVE_CONVERSATION_ID = conv.conversation_id
-      dom.pageTitle().innerText = conv.other_display_name || conv.other_username
-      renderChatView()
+      
+      if (isGroup) {
+        // Open group chat
+        state.ACTIVE_GROUP_ID = conv.group_id
+        state.CAME_FROM_GROUPS = false  // Coming from chats, not groups page
+        dom.pageTitle().innerText = conv.other_display_name
+        const { renderGroupChatView } = await import("./groupChat.js")
+        renderGroupChatView()
+      } else {
+        // Open personal chat
+        state.ACTIVE_CONVERSATION_ID = conv.conversation_id
+        dom.pageTitle().innerText = conv.other_display_name || conv.other_username
+        renderChatView()
+      }
     }
 
-    // Heart click handler
+    // Heart click handler (for both personal chats and groups)
     const heartIcon = item.querySelector('.chat-heart')
-    heartIcon.onclick = async (e) => {
-      e.stopPropagation() // Prevent opening chat
-      
-      const conversationId = conv.conversation_id
-      const wasLiked = conv.is_liked || false
-      
-      try {
-        if (wasLiked) {
-          await unlikeConversation(conversationId)
-          conv.is_liked = false
-          heartIcon.classList.remove('liked')
+    if (heartIcon) {
+      heartIcon.onclick = async (e) => {
+        e.stopPropagation() // Prevent opening chat
+        
+        if (isGroup) {
+          // Handle group like/unlike
+          const groupId = conv.group_id
+          const wasLiked = conv.is_liked || false
+          
+          try {
+            if (wasLiked) {
+              await unlikeGroup(groupId)
+              conv.is_liked = false
+              heartIcon.classList.remove('liked')
+            } else {
+              await likeGroup(groupId)
+              conv.is_liked = true
+              heartIcon.classList.add('liked')
+            }
+            
+            // Update state
+            const stateGroup = state.allConversations.find(c => c.group_id === groupId && c.is_group)
+            if (stateGroup) {
+              stateGroup.is_liked = conv.is_liked
+            }
+            
+            // If in favourites mode, refresh the list
+            const activeMode = document.querySelector('.top-nav i.active')?.dataset.mode
+            if (activeMode === 'favourites') {
+              filterChats('favourites')
+            }
+          } catch (error) {
+            console.error("Error toggling group like:", error)
+          }
         } else {
-          await likeConversation(conversationId)
-          conv.is_liked = true
-          heartIcon.classList.add('liked')
+          // Handle personal chat like/unlike
+          const conversationId = conv.conversation_id
+          const wasLiked = conv.is_liked || false
+          
+          try {
+            if (wasLiked) {
+              await unlikeConversation(conversationId)
+              conv.is_liked = false
+              heartIcon.classList.remove('liked')
+            } else {
+              await likeConversation(conversationId)
+              conv.is_liked = true
+              heartIcon.classList.add('liked')
+            }
+            
+            // Update state
+            const stateConv = state.allConversations.find(c => c.conversation_id === conversationId)
+            if (stateConv) {
+              stateConv.is_liked = conv.is_liked
+            }
+            
+            // If in favourites mode, refresh the list
+            const activeMode = document.querySelector('.top-nav i.active')?.dataset.mode
+            if (activeMode === 'favourites') {
+              filterChats('favourites')
+            }
+          } catch (error) {
+            console.error("Error toggling like:", error)
+          }
         }
-        
-        // Update state
-        const stateConv = state.allConversations.find(c => c.conversation_id === conversationId)
-        if (stateConv) {
-          stateConv.is_liked = conv.is_liked
-        }
-        
-        // If in favourites mode, refresh the list
-        const activeMode = document.querySelector('.top-nav i.active')?.dataset.mode
-        if (activeMode === 'favourites') {
-          filterChats('favourites')
-        }
-      } catch (error) {
-        console.error("Error toggling like:", error)
       }
     }
 
@@ -153,19 +275,18 @@ export function renderChatView() {
   `
 
   topBar.querySelector(".back-button").onclick = async () => {
-    // If we came from friends, go back to friends, otherwise go to chats
-    if (state.CAME_FROM_FRIENDS) {
-      state.CAME_FROM_FRIENDS = false
-      const { renderFriends } = await import("./friends.js")
-      await renderFriends()
-      // Update navigation to show friends tab as active
-      const friendsTab = document.querySelector('.nav-item[data-tab="friends"]')
-      if (friendsTab) {
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'))
-        friendsTab.classList.add('active')
-      }
-    } else {
-      renderChats()
+    // Always go back to chats list and refresh it
+    // This ensures new conversations appear in the list
+    state.CAME_FROM_FRIENDS = false
+    console.log("[DEBUG renderChatView] Back button clicked - refreshing chats list")
+    // Clear state to force fresh fetch
+    state.allConversations = []
+    await renderChats()
+    // Update navigation to show chats tab as active
+    const chatsTab = document.querySelector('.nav-item[data-tab="chats"]')
+    if (chatsTab) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'))
+      chatsTab.classList.add('active')
     }
   }
 
@@ -205,6 +326,95 @@ function setupTopNav() {
   })
 }
 
+function setupCreateGroupButton() {
+  const createGroupBtn = document.getElementById("create-group-header-btn")
+  if (createGroupBtn) {
+    createGroupBtn.onclick = () => {
+      showCreateGroupModal()
+    }
+  }
+}
+
+function showCreateGroupModal() {
+  const modal = document.createElement("div")
+  modal.className = "create-group-modal"
+  modal.innerHTML = `
+    <div class="create-group-modal-content">
+      <div class="create-group-modal-header">
+        <h3>Create New Group</h3>
+        <button class="modal-close-btn" id="close-create-modal">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="create-group-modal-body">
+        <input type="text" id="group-name-input" placeholder="Enter group name..." maxlength="50" autofocus>
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" id="cancel-create-group">Cancel</button>
+          <button class="modal-create-btn" id="confirm-create-group">Create</button>
+        </div>
+      </div>
+    </div>
+  `
+  
+  document.body.appendChild(modal)
+  
+  // Close handlers
+  const closeBtn = modal.querySelector("#close-create-modal")
+  const cancelBtn = modal.querySelector("#cancel-create-group")
+  const confirmBtn = modal.querySelector("#confirm-create-group")
+  const nameInput = modal.querySelector("#group-name-input")
+  
+  const closeModal = () => {
+    document.body.removeChild(modal)
+  }
+  
+  closeBtn.onclick = closeModal
+  cancelBtn.onclick = closeModal
+  
+  // Create group
+  confirmBtn.onclick = async () => {
+    const groupName = nameInput.value.trim()
+    
+    if (!groupName) {
+      alert("Please enter a group name")
+      return
+    }
+    
+    try {
+      const response = await fetch("/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: groupName })
+      })
+      
+      if (response.ok) {
+        closeModal()
+        // Refresh chats list to show the new group
+        renderChats()
+        // Also refresh groups list
+        const { renderGroups } = await import("./groups.js")
+        renderGroups()
+      } else {
+        const data = await response.json()
+        alert(data.error || "Failed to create group")
+      }
+    } catch (error) {
+      console.error("[DEBUG chats] Error creating group:", error)
+      alert("Failed to create group. Please try again.")
+    }
+  }
+  
+  // Close on escape key
+  nameInput.onkeydown = (e) => {
+    if (e.key === "Escape") {
+      closeModal()
+    } else if (e.key === "Enter") {
+      confirmBtn.click()
+    }
+  }
+}
+
 function filterChats(mode) {
   const list = dom.chatList()
   if (!list) return
@@ -221,7 +431,15 @@ function filterChats(mode) {
 
   if (mode === "all" || mode === "private") {
     // Re-sort conversations before displaying (in case new messages arrived)
-    const sorted = [...state.allConversations].sort((a, b) => {
+    // Filter to only show personal chats (not groups) for "private" mode
+    let conversationsToShow = state.allConversations
+    if (mode === "private") {
+      conversationsToShow = state.allConversations.filter(conv => !conv.is_group)
+    }
+    
+    console.log(`[DEBUG filterChats] Mode: ${mode}, Showing ${conversationsToShow.length} conversations`)
+    
+    const sorted = [...conversationsToShow].sort((a, b) => {
       const timeA = a.last_message_time || "1970-01-01T00:00:00"
       const timeB = b.last_message_time || "1970-01-01T00:00:00"
       if (timeA > timeB) return -1
@@ -230,16 +448,36 @@ function filterChats(mode) {
     })
     displayConversations(sorted, list)
   } else if (mode === "groups") {
-    list.innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Group chats coming soon</p>"
+    // Show only groups (joined groups from conversations)
+    const groupsOnly = state.allConversations.filter(conv => conv.is_group)
+    
+    console.log(`[DEBUG filterChats] Mode: groups, Showing ${groupsOnly.length} groups`)
+    
+    if (groupsOnly.length === 0) {
+      list.innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>No groups yet. Join a group to start chatting!</p>"
+    } else {
+      // Sort groups by last message time
+      const sorted = [...groupsOnly].sort((a, b) => {
+        const timeA = a.last_message_time || "1970-01-01T00:00:00"
+        const timeB = b.last_message_time || "1970-01-01T00:00:00"
+        if (timeA > timeB) return -1
+        if (timeA < timeB) return 1
+        return (b.group_id || 0) - (a.group_id || 0)
+      })
+      displayConversations(sorted, list)
+    }
   } else if (mode === "favourites") {
-    // Show only liked chats, sorted by last message time
+    // Show only liked chats and groups, sorted by last message time
     const likedChats = state.allConversations.filter(conv => conv.is_liked)
     const sorted = [...likedChats].sort((a, b) => {
       const timeA = a.last_message_time || "1970-01-01T00:00:00"
       const timeB = b.last_message_time || "1970-01-01T00:00:00"
       if (timeA > timeB) return -1
       if (timeA < timeB) return 1
-      return (b.conversation_id || 0) - (a.conversation_id || 0)
+      // Sort by ID (conversation_id for chats, group_id for groups)
+      const idA = a.conversation_id || a.group_id || 0
+      const idB = b.conversation_id || b.group_id || 0
+      return idB - idA
     })
     
     if (sorted.length === 0) {
@@ -248,4 +486,18 @@ function filterChats(mode) {
       displayConversations(sorted, list)
     }
   }
+}
+
+// Helper functions for group emojis
+function extractEmoji(text) {
+  // Extract first emoji from text using regex
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u
+  const match = text.match(emojiRegex)
+  return match ? match[0] : null
+}
+
+function getRandomEmoji(groupId) {
+  // Use groupId as seed for consistent emoji per group
+  const emojis = ['🎉', '🌟', '🔥', '💫', '⚡', '🎊', '✨', '🎈', '🎁', '🎯', '🎪', '🎭', '🎨', '🎬', '🎮', '🎲', '🎸', '🎺', '🎻', '🥁']
+  return emojis[groupId % emojis.length]
 }

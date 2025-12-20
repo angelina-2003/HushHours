@@ -62,6 +62,8 @@ def get_or_create_conversation(user1_id, user2_id):
     cur = conn.cursor()
 
     try:
+        print(f"[DEBUG user_search_service] get_or_create_conversation called: user1_id={user1_id}, user2_id={user2_id}")
+        
         # Check if conversation already exists
         cur.execute("""
             SELECT id FROM conversations 
@@ -75,11 +77,13 @@ def get_or_create_conversation(user1_id, user2_id):
         if row:
             # Conversation exists
             conversation_id = row[0]
+            print(f"[DEBUG user_search_service] Found existing conversation: {conversation_id}")
             cur.close()
             conn.close()
             return conversation_id
         
         # Create new conversation
+        print(f"[DEBUG user_search_service] Creating new conversation between {user1_id} and {user2_id}")
         cur.execute("""
             INSERT INTO conversations (user1_id, user2_id)
             VALUES (%s, %s)
@@ -88,12 +92,15 @@ def get_or_create_conversation(user1_id, user2_id):
         
         conversation_id = cur.fetchone()[0]
         conn.commit()
+        print(f"[DEBUG user_search_service] Created new conversation: {conversation_id}")
         cur.close()
         conn.close()
         
         return conversation_id
     except Exception as e:
         print(f"[DEBUG user_search_service] Error getting/creating conversation: {e}")
+        import traceback
+        traceback.print_exc()
         conn.rollback()
         try:
             cur.close()

@@ -15,11 +15,14 @@ def conversations():
     if not user_id:
         return jsonify({"error": "Not logged in"}), 401
 
-    print(f"[DEBUG] Fetching conversations for user_id: {user_id} (type: {type(user_id)})")
+    print(f"[DEBUG chat_routes] Fetching conversations for user_id: {user_id} (type: {type(user_id)})")
     data = get_conversations_for_user(user_id)
-    print(f"[DEBUG] Returning {len(data)} conversations")
-    for conv in data:
-        print(f"  - Conversation {conv['conversation_id']} with user: {conv['other_username']} (id: {conv['other_user_id']})")
+    print(f"[DEBUG chat_routes] Returning {len(data)} conversations to frontend")
+    for i, conv in enumerate(data):
+        if conv.get('is_group'):
+            print(f"  {i+1}. Group {conv.get('group_id')}: {conv.get('other_display_name', 'Unknown')}")
+        else:
+            print(f"  {i+1}. Conversation {conv.get('conversation_id')} with user: {conv.get('other_username', conv.get('other_display_name', 'Unknown'))} (id: {conv.get('other_user_id')}), last_msg: {conv.get('last_message_time')}")
     return jsonify(data)
 
 

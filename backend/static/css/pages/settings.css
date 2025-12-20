@@ -132,6 +132,16 @@
   animation: fadeIn 0.2s ease-out;
 }
 
+.settings-modal:not(.settings-modal-content):not(.color-option) {
+  pointer-events: auto;
+}
+
+.settings-modal-content {
+  pointer-events: auto;
+  position: relative;
+  z-index: 1001;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -145,12 +155,15 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-color-light);
   border-radius: var(--radius-xl);
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
+  width: calc(100% - 40px);
+  max-width: 420px;
+  max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  margin: 20px;
+  box-sizing: border-box;
 }
 
 @keyframes slideUp {
@@ -205,42 +218,83 @@
   grid-template-columns: repeat(5, 1fr);
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
+  justify-items: center;
+  align-items: center;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .color-option {
-  aspect-ratio: 1;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--transition-base);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 3px solid transparent;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  touch-action: manipulation;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  background-color: inherit;
+}
+
+.color-option::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .color-option:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.color-option:hover::before {
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .color-option.selected {
   border-color: var(--text-white);
-  box-shadow: 0 0 0 3px var(--purple-light), 0 4px 12px rgba(0, 0, 0, 0.3);
-  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3), 0 4px 20px rgba(0, 0, 0, 0.3);
+  transform: scale(1.2);
+}
+
+.color-option.selected::before {
+  border-color: rgba(99, 102, 241, 0.5);
+  inset: -6px;
 }
 
 .color-option i {
   color: white;
   font-size: 18px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   opacity: 0;
-  transition: opacity var(--transition-base);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: scale(0.8);
+  z-index: 10;
+  pointer-events: none !important;
+  position: relative;
+  display: block;
 }
 
 .color-option.selected i {
-  opacity: 1;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  display: block !important;
+  visibility: visible !important;
 }
 
 .color-picker-footer {
@@ -259,13 +313,18 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  min-width: 100px;
 }
 
 .color-save-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.color-save-btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* Privacy Options */
@@ -278,10 +337,28 @@
 
 /* Responsive */
 @media (max-width: 480px) {
+  .settings-modal-content {
+    width: calc(100% - 20px);
+    max-width: calc(100% - 20px);
+    margin: 10px;
+    max-height: 90vh;
+  }
+  
   .color-picker-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--spacing-sm);
     padding: var(--spacing-md);
+  }
+  
+  .color-option {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .color-option i {
+    font-size: 14px;
   }
   
   .settings-item {

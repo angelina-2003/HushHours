@@ -2,7 +2,7 @@
 console.log("APP.JS DEFINITELY LOADED");
 
 import {state} from "./state.js"
-import {fetchMe} from "./modules/api.js"
+import {fetchMe, getMessageColor} from "./modules/api.js"
 import { initNavigation, showTab } from "./modules/navigation.js"
 import { dom } from "./utils/dom.js"
 
@@ -20,6 +20,28 @@ async function initUser(){
     
     state.CURRENT_USER_ID = data.id
     state.CURRENT_USER_AVATAR = data.avatar
+    
+    // Load message color from user data or API
+    if (data.message_color) {
+      state.CURRENT_USER_MESSAGE_COLOR = data.message_color
+      localStorage.setItem("messageColor", data.message_color)
+    } else {
+      // Try to fetch from API
+      try {
+        const colorData = await getMessageColor()
+        if (colorData && colorData.color) {
+          state.CURRENT_USER_MESSAGE_COLOR = colorData.color
+          localStorage.setItem("messageColor", colorData.color)
+        }
+      } catch (error) {
+        console.error("[DEBUG] Error fetching message color:", error)
+        // Fallback to localStorage or default
+        const savedColor = localStorage.getItem("messageColor")
+        if (savedColor) {
+          state.CURRENT_USER_MESSAGE_COLOR = savedColor
+        }
+      }
+    }
 
     // Set avatar image after a short delay to ensure DOM is ready
     setTimeout(() => {

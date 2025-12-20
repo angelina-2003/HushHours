@@ -16,7 +16,16 @@ def get_conversations_for_user(user_id):
         print(f"[DEBUG chat.py] user_id cannot be converted to int: {user_id}")
         return []
 
-    print(f"[DEBUG chat.py] Querying conversations for user_id: {user_id}")
+    print(f"[DEBUG chat.py] Querying conversations for user_id: {user_id} (type: {type(user_id)})")
+    
+    # First, let's verify the user exists
+    cur.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+    user_exists = cur.fetchone()
+    if not user_exists:
+        print(f"[DEBUG chat.py] ERROR: User {user_id} does not exist in database!")
+        cur.close()
+        conn.close()
+        return []
     
     # First, check ALL conversations in database
     cur.execute("SELECT COUNT(*) FROM conversations")
@@ -58,7 +67,10 @@ def get_conversations_for_user(user_id):
         else:
             print(f"[DEBUG] Conversation {conv[0]} - other user exists: {other_user[1]} (id: {other_user[0]})")
     
-    cur.execute("""
+    # Get all conversations for this user, including those with no messages yet
+    # Use INNER JOIN to ensure the other user exists
+    # IMPORTANT: Make sure we're comparing integers, not strings
+    query = """
         SELECT
             c.id AS conversation_id,
             u.id AS other_user_id,
@@ -71,20 +83,22 @@ def get_conversations_for_user(user_id):
              ORDER BY timestamp DESC, id DESC LIMIT 1) AS last_message_content,
             CASE WHEN lc.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked
         FROM conversations c
-        JOIN users u
+        INNER JOIN users u
           ON u.id = CASE
               WHEN c.user1_id = %s THEN c.user2_id
               ELSE c.user1_id
             END
         LEFT JOIN liked_chats lc ON lc.conversation_id = c.id AND lc.user_id = %s
-        WHERE c.user1_id = %s OR c.user2_id = %s
+        WHERE (c.user1_id = %s OR c.user2_id = %s)
         ORDER BY 
             (SELECT MAX(timestamp) FROM messages WHERE conversation_id = c.id) DESC NULLS LAST,
             c.id DESC
-    """, (user_id, user_id, user_id, user_id))
+    """
+    print(f"[DEBUG chat.py] Executing query with user_id={user_id} (type: {type(user_id)})")
+    cur.execute(query, (user_id, user_id, user_id, user_id))
 
     rows = cur.fetchall()
-    print(f"[DEBUG chat.py] Found {len(rows)} conversations in database")
+    print(f"[DEBUG chat.py] Found {len(rows)} conversations after JOIN with users")
     
     # Also check raw conversation count
     cur.execute("""
@@ -93,11 +107,28 @@ def get_conversations_for_user(user_id):
     """, (user_id, user_id))
     raw_count = cur.fetchone()[0]
     print(f"[DEBUG chat.py] Raw conversation count (no JOIN): {raw_count}")
+    
+    # If there's a mismatch, find which conversations are missing
+    if raw_count > len(rows):
+        print(f"[DEBUG chat.py] WARNING: {raw_count - len(rows)} conversations are missing after JOIN!")
+        cur.execute("""
+            SELECT c.id, c.user1_id, c.user2_id,
+                   CASE WHEN c.user1_id = %s THEN c.user2_id ELSE c.user1_id END as other_user_id
+            FROM conversations c
+            WHERE (c.user1_id = %s OR c.user2_id = %s)
+            AND NOT EXISTS (
+                SELECT 1 FROM users u 
+                WHERE u.id = CASE WHEN c.user1_id = %s THEN c.user2_id ELSE c.user1_id END
+            )
+        """, (user_id, user_id, user_id, user_id))
+        missing = cur.fetchall()
+        for m in missing:
+            print(f"  - Missing conversation {m[0]}: user1={m[1]}, user2={m[2]}, other_user_id={m[3]} (user doesn't exist!)")
 
     conversations = []
 
     for row in rows:
-        conversations.append({
+        conv_data = {
             "conversation_id": row[0],
             "other_user_id": row[1],
             "other_username": row[2],
@@ -105,8 +136,11 @@ def get_conversations_for_user(user_id):
             "other_avatar": row[4],
             "last_message_time": row[5].isoformat() if row[5] else None,
             "last_message_content": row[6],
-            "is_liked": row[7] if len(row) > 7 else False
-        })
+            "is_liked": row[7] if len(row) > 7 else False,
+            "is_group": False  # Explicitly mark as not a group
+        }
+        conversations.append(conv_data)
+        print(f"[DEBUG chat_service] Added conversation {conv_data['conversation_id']} with {conv_data['other_display_name']} (user_id: {conv_data['other_user_id']})")
 
     cur.close()
     conn.close()
@@ -126,6 +160,32 @@ def get_conversations_for_user(user_id):
     print(f"[DEBUG chat_service] After Python sort:")
     for i, conv in enumerate(conversations):
         print(f"  {i+1}. Conversation {conv['conversation_id']} with {conv['other_display_name']} - last_message_time: {conv['last_message_time']}")
+    
+    # Also get groups the user is a member of
+    # IMPORTANT: Only get groups where user is actually a member
+    from services.group_service import get_user_joined_groups
+    groups = get_user_joined_groups(user_id)
+    
+    print(f"[DEBUG chat_service] User {user_id} is a member of {len(groups)} groups")
+    
+    # Add groups to conversations list
+    for group in groups:
+        conversations.append({
+            "conversation_id": None,  # Groups don't have conversation_id
+            "group_id": group["group_id"],
+            "other_display_name": group["name"],
+            "other_avatar": None,  # Groups use icon, not avatar
+            "last_message_time": group["last_message_time"],
+            "last_message_content": group["last_message_content"],
+            "is_liked": group.get("is_liked", False),  # Get liked status from group data
+            "is_group": True  # Flag to identify groups
+        })
+    
+    # Re-sort everything by last_message_time
+    conversations.sort(key=lambda x: (
+        x["last_message_time"] if x["last_message_time"] else "1970-01-01T00:00:00",
+        x.get("group_id", 0) or x.get("conversation_id", 0)
+    ), reverse=True)
     
     return conversations
 

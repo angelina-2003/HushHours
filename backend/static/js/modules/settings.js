@@ -1,6 +1,7 @@
 import { state } from "../state.js"
 import { dom } from "../utils/dom.js"
 import { renderProfile } from "./profile.js"
+import { getMessageColor, saveMessageColor } from "./api.js"
 
 // Color options for message colors
 const MESSAGE_COLORS = [
@@ -29,8 +30,18 @@ const MESSAGE_COLORS = [
 export async function renderSettings() {
   dom.content().className = "app-content settings-content"
   
-  // Get saved message color from localStorage (or default)
-  const savedColor = localStorage.getItem("messageColor") || "#3b82f6"
+  // Get saved message color from backend (or default grey)
+  let savedColor = "#6b7280"  // Default grey
+  try {
+    const colorData = await getMessageColor()
+    savedColor = colorData.color || "#6b7280"
+    // Also sync to localStorage for quick access
+    localStorage.setItem("messageColor", savedColor)
+  } catch (error) {
+    console.error("[DEBUG settings] Error fetching message color:", error)
+    // Fallback to localStorage if backend fails
+    savedColor = localStorage.getItem("messageColor") || "#6b7280"
+  }
   
   dom.content().innerHTML = `
     <div class="settings-container">
@@ -213,28 +224,207 @@ function setupSettingsListeners() {
     }
   }
   
-  // Color selection
-  const colorOptions = document.querySelectorAll(".color-option")
-  let selectedColor = localStorage.getItem("messageColor") || "#3b82f6"
-  
-  colorOptions.forEach(option => {
-    option.onclick = () => {
-      // Remove selected class from all
-      colorOptions.forEach(opt => opt.classList.remove("selected"))
-      // Add selected class to clicked
-      option.classList.add("selected")
-      selectedColor = option.dataset.color
+  // Color selection - setup immediately and also after a delay to ensure DOM is ready
+  function setupColorSelection() {
+    const colorOptions = document.querySelectorAll(".color-option")
+    let selectedColor = savedColor
+    
+    console.log("[DEBUG settings] Found", colorOptions.length, "color options")
+    console.log("[DEBUG settings] Initial selected color:", selectedColor)
+    
+    if (colorOptions.length === 0) {
+      console.warn("[DEBUG settings] No color options found, retrying...")
+      return false
     }
-  })
+    
+    colorOptions.forEach((option, index) => {
+      // Remove any existing listeners by cloning
+      const newOption = option.cloneNode(true)
+      option.parentNode.replaceChild(newOption, option)
+      const optionRef = newOption
+      
+      // Make sure it's clickable with !important styles
+      optionRef.style.setProperty("pointer-events", "auto", "important")
+      optionRef.style.setProperty("cursor", "pointer", "important")
+      optionRef.style.setProperty("position", "relative", "important")
+      optionRef.style.setProperty("z-index", "100", "important")
+      
+      // Get the color value
+      const colorValue = optionRef.dataset.color || optionRef.getAttribute("data-color")
+      const isCurrentlySelected = selectedColor === colorValue
+      
+      console.log(`[DEBUG settings] Color option ${index}: ${colorValue}, selected: ${isCurrentlySelected}`)
+      
+      // Set up click handler
+      const handleClick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        
+        console.log("[DEBUG settings] Color clicked:", colorValue, "Event:", e)
+        
+        // Remove selected class from all
+        const allOptions = document.querySelectorAll(".color-option")
+        allOptions.forEach(opt => {
+          opt.classList.remove("selected")
+          const icon = opt.querySelector("i")
+          if (icon) {
+            icon.style.setProperty("opacity", "0", "important")
+            icon.style.setProperty("display", "block", "important")
+          }
+        })
+        
+        // Add selected class to clicked
+        optionRef.classList.add("selected")
+        selectedColor = colorValue
+        window.selectedMessageColor = colorValue
+        
+        // Force show the checkmark
+        const icon = optionRef.querySelector("i")
+        if (icon) {
+          icon.style.setProperty("opacity", "1", "important")
+          icon.style.setProperty("display", "block", "important")
+          icon.style.setProperty("visibility", "visible", "important")
+        }
+        
+        console.log("[DEBUG settings] Color selected:", selectedColor)
+        console.log("[DEBUG settings] Selected class added:", optionRef.classList.contains("selected"))
+        console.log("[DEBUG settings] Icon opacity:", icon ? icon.style.opacity : "no icon")
+      }
+      
+      // Use multiple event types for maximum compatibility
+      optionRef.addEventListener("click", handleClick, { capture: true })
+      optionRef.addEventListener("mousedown", (e) => {
+        e.preventDefault()
+        handleClick(e)
+      }, { capture: true })
+      optionRef.addEventListener("touchend", (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        handleClick(e)
+      }, { capture: true })
+      
+      // Ensure checkmark is visible if this is the selected color
+      if (isCurrentlySelected) {
+        optionRef.classList.add("selected")
+        const icon = optionRef.querySelector("i")
+        if (icon) {
+          icon.style.setProperty("opacity", "1", "important")
+          icon.style.setProperty("display", "block", "important")
+          icon.style.setProperty("visibility", "visible", "important")
+        }
+      }
+    })
+    
+    return true
+  }
   
-  // Save color
-  const saveColorBtn = document.getElementById("save-color-btn")
-  if (saveColorBtn) {
-    saveColorBtn.onclick = () => {
-      localStorage.setItem("messageColor", selectedColor)
-      if (messageColorModal) messageColorModal.style.display = "none"
-      alert("Message color saved! (Backend implementation coming soon)")
+  // Try to setup immediately
+  if (!setupColorSelection()) {
+    // If it fails, try again after a delay
+    setTimeout(() => {
+      setupColorSelection()
+    }, 100)
+    
+    // And one more time after modal animation
+    setTimeout(() => {
+      setupColorSelection()
+    }, 300)
+  }
+  
+  // Store selectedColor in closure
+  let selectedColor = savedColor
+  window.selectedMessageColor = selectedColor
+  
+  // Setup save button handler
+  function setupSaveButton() {
+    const saveColorBtn = document.getElementById("save-color-btn")
+    if (saveColorBtn) {
+      // Remove any existing handlers
+      const newSaveBtn = saveColorBtn.cloneNode(true)
+      saveColorBtn.parentNode.replaceChild(newSaveBtn, saveColorBtn)
+      
+      // Add new handler that reads from DOM
+      newSaveBtn.onclick = async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Get current selected color from DOM
+        const selectedOption = document.querySelector(".color-option.selected")
+        const currentSelectedColor = selectedOption ? (selectedOption.dataset.color || selectedOption.getAttribute("data-color")) : (window.selectedMessageColor || savedColor)
+        
+        if (!currentSelectedColor) {
+          console.error("[DEBUG settings] No color selected")
+          alert("Please select a color first")
+          return
+        }
+        
+        console.log("[DEBUG settings] Saving color to backend:", currentSelectedColor)
+        
+        try {
+          const result = await saveMessageColor(currentSelectedColor)
+          console.log("[DEBUG settings] Save result:", result)
+          
+          if (result.success || result.color) {
+            // Also save to localStorage for quick access
+            localStorage.setItem("messageColor", currentSelectedColor)
+            // Update state
+            state.CURRENT_USER_MESSAGE_COLOR = currentSelectedColor
+            window.selectedMessageColor = currentSelectedColor
+            
+            // Reload messages if a chat is open to apply new color
+            if (state.ACTIVE_CONVERSATION_ID) {
+              const { loadMessages } = await import("./messages.js")
+              await loadMessages()
+            }
+            
+            // Reload group messages if a group chat is open
+            if (state.ACTIVE_GROUP_ID) {
+              const { loadGroupMessages } = await import("./groupMessages.js")
+              await loadGroupMessages(state.ACTIVE_GROUP_ID)
+            }
+            
+            if (messageColorModal) messageColorModal.style.display = "none"
+            
+            // Show success feedback with smooth animation
+            const btn = newSaveBtn
+            const originalText = btn.textContent
+            const originalBg = btn.style.background
+            btn.textContent = "Saved! ✓"
+            btn.style.background = "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+            btn.style.transform = "scale(0.95)"
+            
+            setTimeout(() => {
+              btn.textContent = originalText
+              btn.style.background = originalBg || ""
+              btn.style.transform = "scale(1)"
+            }, 2000)
+          } else {
+            console.error("[DEBUG settings] Save failed:", result)
+            alert("Failed to save message color. Please try again.")
+          }
+        } catch (error) {
+          console.error("[DEBUG settings] Error saving message color:", error)
+          alert("Failed to save message color. Please try again.")
+        }
+      }
     }
+  }
+  
+  // Setup save button
+  setupSaveButton()
+  
+  // Also setup when modal opens (reuse messageColorModal from line 212)
+  if (messageColorModal) {
+    const modalObserver = new MutationObserver(() => {
+      if (messageColorModal.style.display === "flex" || messageColorModal.style.display !== "none") {
+        setTimeout(() => {
+          setupColorSelection()
+          setupSaveButton()
+        }, 50)
+      }
+    })
+    modalObserver.observe(messageColorModal, { attributes: true, attributeFilter: ["style"] })
   }
   
   // Super Powers (placeholder)
@@ -294,18 +484,24 @@ function setupSettingsListeners() {
             credentials: "include"
           })
           
-          if (response.ok) {
+          if (response.ok || response.status === 200) {
             // Clear local storage
             localStorage.clear()
+            // Clear session storage as well
+            sessionStorage.clear()
             // Redirect to login page
             window.location.href = "/"
           } else {
-            alert("Failed to log out. Please try again.")
+            // Even if response is not ok, clear storage and redirect
+            localStorage.clear()
+            sessionStorage.clear()
+            window.location.href = "/"
           }
         } catch (error) {
           console.error("[DEBUG settings] Logout error:", error)
           // Even if API fails, clear local storage and redirect
           localStorage.clear()
+          sessionStorage.clear()
           window.location.href = "/"
         }
       }

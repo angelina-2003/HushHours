@@ -71,8 +71,10 @@ export async function loadMessages() {
 
     if (msg.sender_id === state.CURRENT_USER_ID) {
       row.className = "message-row outgoing-row"
+      // Get user's message color (from state or localStorage, default to grey)
+      const messageColor = state.CURRENT_USER_MESSAGE_COLOR || localStorage.getItem("messageColor") || "#6b7280"
       row.innerHTML = `
-        <div class="message outgoing">
+        <div class="message outgoing" style="background: ${messageColor};">
           <p class="text">${msg.content}</p>
         </div>
         <img class="message-avatar" src="${avatarSrc}" alt="Avatar" onerror="this.src='/static/avatars/default.png'">
@@ -183,6 +185,18 @@ export async function sendMessage() {
 
   // Reload all messages (this will sort and render them correctly)
   await loadMessages()
+  
+  // If we came from friends, refresh the chat list in the background
+  // so the conversation appears when user goes back
+  if (state.CAME_FROM_FRIENDS) {
+    // Refresh chat list in background (don't await, just trigger)
+    import("./chats.js").then(({ renderChats }) => {
+      // Small delay to ensure message is saved
+      setTimeout(() => {
+        renderChats().catch(err => console.error("[DEBUG] Error refreshing chats:", err))
+      }, 500)
+    })
+  }
   
   // Extra aggressive scroll to bottom after loadMessages completes
   const messagesDiv = dom.messages()

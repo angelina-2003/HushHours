@@ -139,6 +139,41 @@
   display: flex;
   gap: 36px;
   align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.create-group-header-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--gradient-primary);
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-size: 16px;
+  margin-left: var(--spacing-md);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  flex-shrink: 0;
+}
+
+.create-group-header-btn:hover {
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.create-group-header-btn:active {
+  transform: translateY(0) scale(1);
 }
 
 .top-nav i {
@@ -216,6 +251,7 @@
   justify-content: center;
   height: var(--top-bar-height);
   min-height: var(--top-bar-height);
+  position: relative;
 }
 
 .page-header h2 {
@@ -224,6 +260,13 @@
   color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
+}
+
+.page-header .create-group-header-btn {
+  position: absolute;
+  right: var(--spacing-lg);
+  top: 45%;
+  transform: translateY(-50%);
 }
 
 /* Hide page header when in chat view (title is in top-bar) */

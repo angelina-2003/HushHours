@@ -2,6 +2,7 @@ import { renderChats } from "./chats.js"
 import { renderProfile } from "./profile.js"
 import { renderFriends } from "./friends.js"
 import { renderSettings } from "./settings.js"
+import { renderGroups } from "./groups.js"
 import { dom } from "../utils/dom.js"
 
 const navItems = document.querySelectorAll(".nav-item")
@@ -25,20 +26,24 @@ export function showTab(tab) {
       topBar.style.display = "flex"
     }
     dom.pageTitle().innerText = "My Chats"
+    // Always refresh chats when switching to chats tab
     renderChats()
+    return
+  }
+
+  if (tab === "groups") {
+    // Show top bar is hidden for groups page (it's handled in renderGroups)
+    if (topBar) {
+      topBar.style.display = "none"
+    }
+    dom.pageTitle().innerText = "Groups"
+    renderGroups()
     return
   }
 
   // Hide top bar for all other tabs
   if (topBar) {
     topBar.style.display = "none"
-  }
-
-  if (tab === "groups") {
-    dom.pageTitle().innerText = "Groups"
-    dom.content().className = "app-content"
-    dom.content().innerHTML = "<p style='opacity:0.6; text-align:center; padding:40px;'>Groups coming soon</p>"
-    return
   }
 
   if (tab === "avatar") {

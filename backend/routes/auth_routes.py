@@ -16,6 +16,13 @@ def register():
     password = data.get("password")
     avatar = data.get("avatar")
 
+    # Debug: Log registration data
+    print(f"[DEBUG register] Registration data received:")
+    print(f"  username: {username}")
+    print(f"  display_name: {display_name}")
+    print(f"  age: {age}")
+    print(f"  gender: {gender}")
+    print(f"  avatar: {avatar}")
 
     success, result = register_user(
         username,
