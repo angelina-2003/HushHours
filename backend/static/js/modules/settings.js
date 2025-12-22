@@ -46,6 +46,14 @@ const MESSAGE_COLORS = [
 ]
 
 export async function renderSettings() {
+  // Remove create group button from settings page
+  const pageHeader = document.querySelector(".page-header")
+  if (pageHeader) {
+    const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+    if (existingBtn) {
+      existingBtn.remove()
+    }
+  }
   dom.content().className = "app-content settings-content"
   
   // Get saved message color from backend (or default grey)

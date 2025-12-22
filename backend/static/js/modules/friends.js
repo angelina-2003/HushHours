@@ -3,6 +3,14 @@ import { dom } from "../utils/dom.js"
 import { renderChatView } from "./chats.js"
 
 export async function renderFriends() {
+  // Remove create group button from friends page
+  const pageHeader = document.querySelector(".page-header")
+  if (pageHeader) {
+    const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+    if (existingBtn) {
+      existingBtn.remove()
+    }
+  }
   try {
     // Fetch friends list
     const response = await fetch("/friends", { credentials: "include" })
@@ -197,6 +205,7 @@ function setupSearchResultListeners() {
         
         if (friend && friend.conversation_id) {
           state.ACTIVE_CONVERSATION_ID = friend.conversation_id
+          state.ACTIVE_CHAT_OTHER_USER_ID = friend.friend_id  // Store other user ID for profile viewing
           state.CAME_FROM_FRIENDS = true
           dom.pageTitle().innerText = friend.display_name
           renderChatView()
@@ -252,9 +261,11 @@ function setupFriendListeners() {
       e.stopPropagation()
       const conversationId = parseInt(btn.dataset.conversationId)
       const friendName = btn.dataset.friendName
+      const friendId = parseInt(btn.dataset.friendId) || null
       
       if (conversationId) {
         state.ACTIVE_CONVERSATION_ID = conversationId
+        state.ACTIVE_CHAT_OTHER_USER_ID = friendId  // Store other user ID for profile viewing
         state.CAME_FROM_FRIENDS = true // Track that we came from friends
         // Set page title before rendering chat view
         dom.pageTitle().innerText = friendName

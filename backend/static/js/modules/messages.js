@@ -173,6 +173,21 @@ export async function loadMessages() {
       avatarImg.src = avatarSrc
       avatarImg.alt = "Avatar"
       avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+      // Add click handler to view profile (only for incoming messages)
+      avatarImg.style.cursor = "pointer"
+      avatarImg.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        // Immediately clear chat content for smooth transition
+        const content = dom.content()
+        if (content) {
+          content.innerHTML = ""
+          content.style.opacity = "0.5"
+        }
+        import("./profile.js").then(({ viewProfile }) => {
+          viewProfile(msg.sender_id)
+        })
+      }
       
       row.appendChild(messageDiv)
       row.appendChild(avatarImg)
@@ -192,6 +207,21 @@ export async function loadMessages() {
       avatarImg.src = avatarSrc
       avatarImg.alt = "Avatar"
       avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+      // Add click handler to view profile (only for incoming messages)
+      avatarImg.style.cursor = "pointer"
+      avatarImg.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        // Immediately clear chat content for smooth transition
+        const content = dom.content()
+        if (content) {
+          content.innerHTML = ""
+          content.style.opacity = "0.5"
+        }
+        import("./profile.js").then(({ viewProfile }) => {
+          viewProfile(msg.sender_id)
+        })
+      }
       
       // Use appropriate text color based on background brightness
       const textColor = getTextColor(messageColor)

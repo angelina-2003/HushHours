@@ -1,10 +1,35 @@
 import { state } from "../state.js"
-import { fetchMe } from "./api.js"
+import { fetchMe, fetchUserProfile } from "./api.js"
 import { dom } from "../utils/dom.js"
 import { initAvatarCarousel } from "./avatarCarousel.js"
 
 export async function renderProfile() {
   try {
+    // Remove create group button from profile page
+    const pageHeader = document.querySelector(".page-header")
+    if (pageHeader) {
+      const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+      if (existingBtn) {
+        existingBtn.remove()
+      }
+    }
+    
+    // Check if we came from a chat context (group or personal)
+    // Use stored previous context if available (from navigation.js)
+    const previousGroupId = state.PROFILE_VIEW_PREVIOUS_GROUP_ID || state.ACTIVE_GROUP_ID
+    const previousConversationId = state.PROFILE_VIEW_PREVIOUS_CONVERSATION_ID || state.ACTIVE_CONVERSATION_ID
+    const previousPageTitle = state.PROFILE_VIEW_PREVIOUS_PAGE_TITLE || dom.pageTitle()?.innerText || null
+    const cameFromChat = previousGroupId || previousConversationId
+    
+    // Immediately clear content if coming from chat for smooth transition
+    if (cameFromChat) {
+      const content = dom.content()
+      content.className = "app-content profile-content"
+      content.innerHTML = "" // Clear immediately
+      content.style.opacity = "0.5" // Dim while loading
+      dom.bottomNav().style.display = "none"
+    }
+    
     // Fetch current user data
     const userData = await fetchMe()
     
@@ -33,7 +58,56 @@ export async function renderProfile() {
   // Format gender display
   const genderDisplay = userData.gender ? userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1) : "Not set"
   
-  dom.content().className = "app-content profile-content"
+  // Show top bar with back button if we came from a chat
+  const topBar = dom.topBar()
+  if (cameFromChat) {
+    topBar.style.display = "flex"
+    topBar.innerHTML = `
+      <button class="back-button">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back</span>
+      </button>
+      <h2 class="chat-header-title">${userData.display_name || userData.username}</h2>
+    `
+    
+    // Setup back button handler
+    const backBtn = topBar.querySelector(".back-button")
+    backBtn.onclick = async () => {
+      // Clear stored previous context
+      state.PROFILE_VIEW_PREVIOUS_CONVERSATION_ID = null
+      state.PROFILE_VIEW_PREVIOUS_GROUP_ID = null
+      state.PROFILE_VIEW_PREVIOUS_PAGE_TITLE = null
+      
+      // Restore the previous chat view
+      if (previousGroupId) {
+        state.ACTIVE_GROUP_ID = previousGroupId
+        if (previousPageTitle) {
+          dom.pageTitle().innerText = previousPageTitle
+        }
+        const { renderGroupChatView } = await import("./groupChat.js")
+        renderGroupChatView()
+      } else if (previousConversationId) {
+        state.ACTIVE_CONVERSATION_ID = previousConversationId
+        if (previousPageTitle) {
+          dom.pageTitle().innerText = previousPageTitle
+        }
+        const { renderChatView } = await import("./chats.js")
+        renderChatView()
+      } else {
+        // If no previous context, just go to chats tab
+        const { showTab } = await import("./navigation.js")
+        showTab("chats")
+      }
+    }
+  } else {
+    // Hide top bar if not from chat
+    topBar.style.display = "none"
+  }
+  
+  // Restore full opacity and set content
+  const content = dom.content()
+  content.className = "app-content profile-content"
+  content.style.opacity = "1"
   dom.content().innerHTML = `
     <div class="profile-container">
       <!-- Avatar -->
@@ -279,6 +353,234 @@ export async function renderProfile() {
       <p style='text-align:center; opacity:0.6; padding:40px;'>
         Error loading profile. Please refresh the page.
       </p>
+    `
+  }
+}
+
+/**
+ * View another user's profile (read-only)
+ */
+export async function viewProfile(userId) {
+  try {
+    // Store the user ID and previous context in state
+    state.VIEWING_PROFILE_USER_ID = userId
+    
+    // Determine which tab we came from
+    const currentTab = document.querySelector(".nav-item.active")?.dataset.tab || "chats"
+    state.PROFILE_VIEW_PREVIOUS_TAB = currentTab
+    
+    // Store the active conversation/group ID and page title before viewing profile
+    state.PROFILE_VIEW_PREVIOUS_CONVERSATION_ID = state.ACTIVE_CONVERSATION_ID
+    state.PROFILE_VIEW_PREVIOUS_GROUP_ID = state.ACTIVE_GROUP_ID
+    state.PROFILE_VIEW_PREVIOUS_PAGE_TITLE = dom.pageTitle()?.innerText || null
+    
+    // Immediately clear chat content and show loading state for smooth transition
+    const content = dom.content()
+    content.className = "app-content profile-content"
+    content.innerHTML = "" // Clear immediately
+    content.style.opacity = "0.5" // Dim while loading
+    
+    // Hide bottom nav immediately
+    dom.bottomNav().style.display = "none"
+    
+    // Fetch user data
+    const userData = await fetchUserProfile(userId)
+    
+    if (!userData || userData.error) {
+      console.error("[DEBUG profile] No user data received:", userData)
+      dom.content().className = "app-content profile-content"
+      dom.content().innerHTML = `
+        <div style='text-align:center; padding:40px;'>
+          <p style='opacity:0.6; margin-bottom:20px;'>Error loading profile</p>
+          <button onclick="window.history.back()" style="padding:10px 20px; background:var(--gradient-primary); border:none; border-radius:8px; color:white; cursor:pointer;">Go Back</button>
+        </div>
+      `
+      return
+    }
+    
+    console.log("[DEBUG profile] User profile data received:", userData)
+
+    // Generate personal link (default for now, will implement custom links later)
+    const personalLink = `${window.location.origin}/profile/${userData.username}`
+    
+    // Available gift types
+    const giftTypes = ["🎁", "💝", "🌹", "⭐"]
+    
+    // Get gift counts from user data (default to 0 if not present)
+    const giftCounts = userData.gifts || {}
+    
+    // Format gender display
+    const genderDisplay = userData.gender ? userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1) : "Not set"
+    
+    // Show top bar with back button
+    const topBar = dom.topBar()
+    topBar.style.display = "flex"
+    topBar.innerHTML = `
+      <button class="back-button">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back</span>
+      </button>
+      <h2 class="chat-header-title">${userData.display_name || userData.username}</h2>
+    `
+    
+    // Restore full opacity
+    content.style.opacity = "1"
+    content.className = "app-content profile-content"
+    dom.content().innerHTML = `
+      <div class="profile-container" style="position:relative;">
+        
+        <!-- Avatar (read-only, no menu) -->
+        <div class="profile-avatar-wrapper">
+          <img class="profile-avatar" src="/static/avatars/${userData.avatar || 'default.png'}" alt="Avatar" onerror="this.src='/static/avatars/default.png'" style="cursor:default;">
+        </div>
+        
+        <!-- Display Name -->
+        <h2 class="profile-display-name">${userData.display_name || userData.username}</h2>
+        
+        <!-- Username -->
+        <p class="profile-username">@${userData.username}</p>
+        
+        <!-- Info Bar -->
+        <div class="profile-info-bar">
+          <div class="info-item">
+            <span class="info-label">Gender</span>
+            <span class="info-value">${genderDisplay}</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-label">Age</span>
+            <span class="info-value">${userData.age || "N/A"}</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-label">Hush Points</span>
+            <span class="info-value">${userData.hush_points || 0}</span>
+          </div>
+        </div>
+        
+        <!-- Gifts Section -->
+        <div class="profile-gifts-section">
+          <h3 class="gifts-title">Gifts Received</h3>
+          <div class="gifts-grid">
+            ${giftTypes.map(giftType => {
+              const count = giftCounts[giftType] || 0
+              return `
+                <div class="gift-item">
+                  <span class="gift-emoji">${giftType}</span>
+                  <span class="gift-count">${count}</span>
+                </div>
+              `
+            }).join('')}
+          </div>
+        </div>
+        
+        <!-- Personal Link Section -->
+        <div class="profile-link-section">
+          <h3 class="link-title">Personal Link</h3>
+          <div class="link-container-centered">
+            <input type="text" class="link-input-centered" id="personal-link-input" value="${personalLink}" readonly>
+            <button class="link-copy-btn-centered" id="copy-link-btn">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+          <p class="link-hint">Share this link to let others find this profile</p>
+        </div>
+      </div>
+    `
+    
+    // Setup copy link functionality
+    const copyBtn = document.getElementById("copy-link-btn")
+    const linkInput = document.getElementById("personal-link-input")
+    
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(personalLink)
+        
+        // Update button to show success
+        copyBtn.classList.add("copied")
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+          copyBtn.classList.remove("copied")
+        }, 2000)
+      } catch (err) {
+        // Fallback for older browsers
+        linkInput.select()
+        document.execCommand("copy")
+        
+        copyBtn.classList.add("copied")
+        
+        setTimeout(() => {
+          copyBtn.classList.remove("copied")
+        }, 2000)
+      }
+    }
+    
+    // Also allow clicking on input to select
+    linkInput.onclick = () => {
+      linkInput.select()
+    }
+    
+    // Back button functionality - use top bar back button
+    const backBtn = topBar.querySelector(".back-button")
+    backBtn.onclick = async () => {
+      console.log("[DEBUG profile] Back button clicked")
+      
+      // Store values before clearing
+      const previousConversationId = state.PROFILE_VIEW_PREVIOUS_CONVERSATION_ID
+      const previousGroupId = state.PROFILE_VIEW_PREVIOUS_GROUP_ID
+      const previousPageTitle = state.PROFILE_VIEW_PREVIOUS_PAGE_TITLE
+      const previousTab = state.PROFILE_VIEW_PREVIOUS_TAB || "chats"
+      
+      // Clear viewing state
+      state.VIEWING_PROFILE_USER_ID = null
+      state.PROFILE_VIEW_PREVIOUS_CONVERSATION_ID = null
+      state.PROFILE_VIEW_PREVIOUS_GROUP_ID = null
+      state.PROFILE_VIEW_PREVIOUS_PAGE_TITLE = null
+      state.PROFILE_VIEW_PREVIOUS_TAB = null
+      
+      // Show top bar and bottom nav again
+      dom.topBar().style.display = "flex"
+      dom.bottomNav().style.display = "flex"
+      
+      // If we were in a group chat, restore it
+      if (previousGroupId) {
+        console.log("[DEBUG profile] Restoring group chat:", previousGroupId)
+        state.ACTIVE_GROUP_ID = previousGroupId
+        if (previousPageTitle) {
+          dom.pageTitle().innerText = previousPageTitle
+        }
+        const { renderGroupChatView } = await import("./groupChat.js")
+        renderGroupChatView()
+        return
+      }
+      
+      // If we were in a personal chat, restore it
+      if (previousConversationId) {
+        console.log("[DEBUG profile] Restoring personal chat:", previousConversationId)
+        state.ACTIVE_CONVERSATION_ID = previousConversationId
+        if (previousPageTitle) {
+          dom.pageTitle().innerText = previousPageTitle
+        }
+        const { renderChatView } = await import("./chats.js")
+        renderChatView()
+        return
+      }
+      
+      // Otherwise, navigate back to previous tab
+      console.log("[DEBUG profile] Going back to tab:", previousTab)
+      const { showTab } = await import("./navigation.js")
+      showTab(previousTab)
+    }
+    
+  } catch (error) {
+    console.error("[DEBUG profile] Error viewing profile:", error)
+    dom.content().className = "app-content profile-content"
+    dom.content().innerHTML = `
+      <div style='text-align:center; padding:40px;'>
+        <p style='opacity:0.6; margin-bottom:20px;'>Error loading profile. Please try again.</p>
+        <button onclick="window.history.back()" style="padding:10px 20px; background:var(--gradient-primary); border:none; border-radius:8px; color:white; cursor:pointer;">Go Back</button>
+      </div>
     `
   }
 }

@@ -46,11 +46,28 @@ async function initUser(){
     // Set avatar image after a short delay to ensure DOM is ready
     setTimeout(() => {
       const avatarImg = dom.avatarImg()
+      const avatarNavItem = document.querySelector(".avatar-nav")
+      
       if (avatarImg && data.avatar) {
         avatarImg.src = `/static/avatars/${data.avatar}`
         avatarImg.onerror = function() {
           this.src = '/static/avatars/default.png'
         }
+      }
+      
+      // Make avatar clickable to show profile
+      if (avatarImg) {
+        avatarImg.style.cursor = "pointer"
+        avatarImg.onclick = (e) => {
+          e.stopPropagation()
+          // Navigate to profile tab
+          showTab("avatar")
+        }
+      }
+      
+      // Also make the nav item clickable (in case clicking the container)
+      if (avatarNavItem) {
+        avatarNavItem.style.cursor = "pointer"
       }
     }, 100)
   } catch (error) {

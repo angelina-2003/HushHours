@@ -10,6 +10,32 @@ export async function renderGroups() {
       topBar.style.display = "none"  // Groups page doesn't use top bar
     }
     
+    // Add create group button to page header (extreme right)
+    const pageHeader = document.querySelector(".page-header")
+    if (pageHeader) {
+      // Remove existing button if any
+      const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+      if (existingBtn) {
+        existingBtn.remove()
+      }
+      
+      // Add new button at extreme right
+      const createBtn = document.createElement("button")
+      createBtn.className = "create-group-header-btn"
+      createBtn.id = "create-group-header-btn"
+      createBtn.title = "Create Group"
+      createBtn.innerHTML = '<i class="fa-solid fa-plus"></i>'
+      createBtn.style.marginLeft = "auto" // Push to extreme right
+      pageHeader.appendChild(createBtn)
+      
+      // Setup click handler
+      createBtn.onclick = () => {
+        import("./chats.js").then(({ showCreateGroupModal }) => {
+          showCreateGroupModal()
+        })
+      }
+    }
+    
     // Show bottom nav
     const bottomNav = document.querySelector(".bottom-nav")
     if (bottomNav) {

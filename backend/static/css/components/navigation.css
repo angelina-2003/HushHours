@@ -94,6 +94,17 @@
   height: 100%;
   border-radius: var(--radius-full);
   object-fit: contain;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform var(--transition-base);
+}
+
+.avatar-nav img:hover {
+  transform: scale(1.05);
+}
+
+.avatar-nav {
+  cursor: pointer;
 }
 
 /* Top Navigation */
@@ -135,6 +146,22 @@
   pointer-events: none;
 }
 
+/* Group header title should be clickable */
+#top-bar #group-header-title {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Personal chat header title should be clickable */
+#top-bar #personal-chat-header-title {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: none;
+  z-index: 10;
+}
+
 .top-nav {
   display: flex;
   gap: 36px;
@@ -162,9 +189,9 @@
   cursor: pointer;
   transition: all var(--transition-base);
   font-size: 16px;
-  margin-left: var(--spacing-md);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
   flex-shrink: 0;
+  margin-left: auto; /* Push to extreme right */
 }
 
 .create-group-header-btn:hover {
@@ -248,7 +275,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   height: var(--top-bar-height);
   min-height: var(--top-bar-height);
   position: relative;
@@ -260,13 +287,11 @@
   color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
-}
-
-.page-header .create-group-header-btn {
   position: absolute;
-  right: var(--spacing-lg);
-  top: 45%;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  pointer-events: none;
 }
 
 /* Hide page header when in chat view (title is in top-bar) */

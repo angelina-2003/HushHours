@@ -235,3 +235,37 @@ def save_message_color():
         conn.close()
         return jsonify({"error": "Failed to save message color"}), 500
 
+
+@user_bp.route("/users/<int:user_id>")
+def get_user_profile(user_id):
+    """Get another user's profile data"""
+    current_user_id = session.get("user_id")
+
+    if not current_user_id:
+        return jsonify({"error": "Not logged in"}), 401
+
+    # Get user data
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Gifts are already included in get_user_by_id response as a dictionary
+    gifts = user.get("gifts", {})
+    
+    # Ensure gifts is a dictionary (get_user_by_id already returns it as dict)
+    if not isinstance(gifts, dict):
+        gifts = {}
+
+    # Return user profile data (similar to /me but for other users)
+    return jsonify({
+        "id": user.get("id"),
+        "username": user.get("username"),
+        "display_name": user.get("display_name"),
+        "avatar": user.get("avatar") or user.get("avatar_key") or "default.png",
+        "gender": user.get("gender"),
+        "age": user.get("age"),
+        "hush_points": user.get("hush_points", 0),
+        "gifts": gifts
+    })
+

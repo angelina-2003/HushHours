@@ -4,5 +4,6 @@ export const dom = {
     topBar: () => document.getElementById("top-bar"),
     pageTitle: () => document.getElementById("page-title"),
     chatList: () => document.getElementById("chat-list"),
-    messages: () => document.getElementById("messages")
+    messages: () => document.getElementById("messages"),
+    bottomNav: () => document.querySelector(".bottom-nav")
 }

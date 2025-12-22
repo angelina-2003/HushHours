@@ -88,6 +88,23 @@ export async function loadGroupMessages(groupId) {
         avatarImg.src = avatarSrc
         avatarImg.alt = "Avatar"
         avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+        // Make own avatar clickable to view own profile
+        avatarImg.style.cursor = "pointer"
+        avatarImg.style.pointerEvents = "auto"
+        avatarImg.style.zIndex = "10"
+        avatarImg.onclick = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          // Immediately clear chat content for smooth transition
+          const content = dom.content()
+          if (content) {
+            content.innerHTML = ""
+            content.style.opacity = "0.5"
+          }
+          import("./navigation.js").then(({ showTab }) => {
+            showTab("avatar")
+          })
+        }
         
         messageRow.appendChild(messageDiv)
         messageRow.appendChild(avatarImg)
@@ -106,6 +123,23 @@ export async function loadGroupMessages(groupId) {
         avatarImg.src = avatarSrc
         avatarImg.alt = escapeHtml(msg.sender_display_name)
         avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+        // Add click handler to view profile
+        avatarImg.style.cursor = "pointer"
+        avatarImg.style.pointerEvents = "auto"
+        avatarImg.style.zIndex = "10"
+        avatarImg.onclick = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          // Immediately clear chat content for smooth transition
+          const content = dom.content()
+          if (content) {
+            content.innerHTML = ""
+            content.style.opacity = "0.5"
+          }
+          import("./profile.js").then(({ viewProfile }) => {
+            viewProfile(msg.sender_id)
+          })
+        }
         
         // Use appropriate text color based on background brightness
         const textColor = getTextColor(messageColor)

@@ -82,3 +82,8 @@ export async function saveMessageColor(color) {
   })
   return res.json()
 }
+
+export async function fetchUserProfile(userId) {
+  const res = await fetch(`/users/${userId}`, { credentials: "include" })
+  return res.json()
+}

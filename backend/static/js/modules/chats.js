@@ -15,7 +15,7 @@ export async function renderChats() {
 
   setupTopNav()
   
-  // Add create group button to page header (right of "My Chats")
+  // Add create group button to page header (extreme right)
   const pageHeader = document.querySelector(".page-header")
   if (pageHeader) {
     // Remove existing button if any
@@ -24,16 +24,16 @@ export async function renderChats() {
       existingBtn.remove()
     }
     
-    // Add new button
+    // Add new button at extreme right
     const createBtn = document.createElement("button")
     createBtn.className = "create-group-header-btn"
     createBtn.id = "create-group-header-btn"
     createBtn.title = "Create Group"
     createBtn.innerHTML = '<i class="fa-solid fa-plus"></i>'
+    createBtn.style.marginLeft = "auto" // Push to extreme right
     pageHeader.appendChild(createBtn)
     setupCreateGroupButton()
   }
-  setupCreateGroupButton()
 
   const card = document.querySelector(".card")
   const bottomNav = document.querySelector(".bottom-nav")
@@ -173,6 +173,7 @@ function displayConversations(conversations, list) {
       } else {
         // Open personal chat
         state.ACTIVE_CONVERSATION_ID = conv.conversation_id
+        state.ACTIVE_CHAT_OTHER_USER_ID = conv.other_user_id  // Store other user ID for profile viewing
         dom.pageTitle().innerText = conv.other_display_name || conv.other_username
         renderChatView()
       }
@@ -253,6 +254,15 @@ function displayConversations(conversations, list) {
 }
 
 export function renderChatView() {
+  // Remove create group button when opening a chat
+  const pageHeader = document.querySelector(".page-header")
+  if (pageHeader) {
+    const existingBtn = pageHeader.querySelector(".create-group-header-btn")
+    if (existingBtn) {
+      existingBtn.remove()
+    }
+  }
+  
   // Show top bar for chat view
   const topBar = dom.topBar()
   if (!topBar) {
@@ -271,15 +281,46 @@ export function renderChatView() {
       <i class="fa-solid fa-arrow-left"></i>
       <span>Back</span>
     </button>
-    <h2 class="chat-header-title">${username}</h2>
+    <h2 class="chat-header-title" id="personal-chat-header-title" style="cursor: pointer; user-select: none; pointer-events: auto;">${username}</h2>
   `
+  
+  // Make username header clickable to view profile (only for personal chats, not groups)
+  setTimeout(() => {
+    const chatHeaderTitle = document.getElementById("personal-chat-header-title")
+    if (chatHeaderTitle && state.ACTIVE_CHAT_OTHER_USER_ID) {
+      console.log("[DEBUG chats] Setting up personal chat header click handler for user:", state.ACTIVE_CHAT_OTHER_USER_ID)
+      chatHeaderTitle.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        console.log("[DEBUG chats] Personal chat header clicked!")
+        import("./profile.js").then(({ viewProfile }) => {
+          viewProfile(state.ACTIVE_CHAT_OTHER_USER_ID)
+        })
+      }
+      // Also add touch event for mobile
+      chatHeaderTitle.ontouchstart = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        import("./profile.js").then(({ viewProfile }) => {
+          viewProfile(state.ACTIVE_CHAT_OTHER_USER_ID)
+        })
+      }
+    }
+  }, 100)
 
   topBar.querySelector(".back-button").onclick = async () => {
-    // Always go back to chats list and refresh it
-    // This ensures new conversations appear in the list
-    state.CAME_FROM_FRIENDS = false
-    console.log("[DEBUG renderChatView] Back button clicked - refreshing chats list")
-    // Clear state to force fresh fetch
+    console.log("[DEBUG renderChatView] Back button clicked")
+    
+    // Check where we came from
+    if (state.CAME_FROM_FRIENDS) {
+      // If we came from friends, go back to friends
+      state.CAME_FROM_FRIENDS = false
+      const { showTab } = await import("./navigation.js")
+      showTab("friends")
+      return
+    }
+    
+    // Otherwise, go back to chats list
     state.allConversations = []
     await renderChats()
     // Update navigation to show chats tab as active
@@ -294,6 +335,33 @@ export function renderChatView() {
   const bottomNav = document.querySelector(".bottom-nav")
   if (card) card.classList.add("chat-active")
   if (bottomNav) bottomNav.style.display = "none"
+
+  // Ensure avatar click handler is set up even when bottom nav is hidden
+  setTimeout(() => {
+    const avatarImg = dom.avatarImg()
+    const avatarNavItem = document.querySelector(".avatar-nav")
+    
+    if (avatarImg) {
+      avatarImg.style.cursor = "pointer"
+      avatarImg.onclick = (e) => {
+        e.stopPropagation()
+        // Navigate to profile tab
+        import("./navigation.js").then(({ showTab }) => {
+          showTab("avatar")
+        })
+      }
+    }
+    
+    if (avatarNavItem) {
+      avatarNavItem.style.cursor = "pointer"
+      avatarNavItem.onclick = (e) => {
+        e.stopPropagation()
+        import("./navigation.js").then(({ showTab }) => {
+          showTab("avatar")
+        })
+      }
+    }
+  }, 100)
 
   dom.content().className = "app-content chat-active"
   dom.content().innerHTML = `
@@ -335,7 +403,7 @@ function setupCreateGroupButton() {
   }
 }
 
-function showCreateGroupModal() {
+export function showCreateGroupModal() {
   const modal = document.createElement("div")
   modal.className = "create-group-modal"
   modal.innerHTML = `
@@ -389,12 +457,16 @@ function showCreateGroupModal() {
       })
       
       if (response.ok) {
+        const groupData = await response.json()
         closeModal()
-        // Refresh chats list to show the new group
-        renderChats()
-        // Also refresh groups list
-        const { renderGroups } = await import("./groups.js")
-        renderGroups()
+        
+        // Open the newly created group chat immediately
+        state.ACTIVE_GROUP_ID = groupData.id
+        state.CAME_FROM_GROUPS = false  // Coming from chats, not groups page
+        dom.pageTitle().innerText = groupData.name
+        
+        const { renderGroupChatView } = await import("./groupChat.js")
+        await renderGroupChatView()
       } else {
         const data = await response.json()
         alert(data.error || "Failed to create group")
