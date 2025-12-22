@@ -2,6 +2,57 @@ import { state } from "../state.js"
 import { fetchMessages, sendMessageApi } from "./api.js"
 import { dom } from "../utils/dom.js"
 
+// Function to determine if a color is light or dark
+function isLightColor(color) {
+  if (!color || typeof color !== 'string') {
+    console.log(`[DEBUG isLightColor] Invalid color input: ${color} (type: ${typeof color})`)
+    return false
+  }
+  
+  if (!color.startsWith('#')) {
+    console.log(`[DEBUG isLightColor] Color doesn't start with #: ${color}`)
+    return false
+  }
+  
+  try {
+    // Convert hex to RGB
+    const hex = color.replace('#', '').trim()
+    if (hex.length !== 6) {
+      console.log(`[DEBUG isLightColor] Invalid hex length: ${hex.length} for ${color}`)
+      return false
+    }
+    
+    const r = parseInt(hex.substr(0, 2), 16)
+    const g = parseInt(hex.substr(2, 2), 16)
+    const b = parseInt(hex.substr(4, 2), 16)
+    
+    if (isNaN(r) || isNaN(g) || isNaN(b)) {
+      console.log(`[DEBUG isLightColor] Invalid RGB values: r=${r}, g=${g}, b=${b} for ${color}`)
+      return false
+    }
+    
+    // Calculate luminance using relative luminance formula
+    // https://www.w3.org/WAI/GL/wiki/Relative_luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    
+    const isLight = luminance > 0.5
+    console.log(`[DEBUG isLightColor] Color: ${color}, RGB: (${r}, ${g}, ${b}), Luminance: ${luminance.toFixed(3)}, isLight: ${isLight}`)
+    
+    return isLight
+  } catch (e) {
+    console.error(`[DEBUG isLightColor] Error processing color ${color}:`, e)
+    return false
+  }
+}
+
+// Function to get appropriate text color based on background
+function getTextColor(backgroundColor) {
+  const isLight = isLightColor(backgroundColor)
+  const textColor = isLight ? '#000000' : '#ffffff'
+  console.log(`[DEBUG getTextColor] Background: ${backgroundColor}, isLight: ${isLight}, Text: ${textColor}`)
+  return textColor
+}
+
 
 export async function loadMessages() {
   if (!state.ACTIVE_CONVERSATION_ID) return
@@ -9,9 +60,24 @@ export async function loadMessages() {
   const messages = await fetchMessages(state.ACTIVE_CONVERSATION_ID)
   const messagesDiv = dom.messages()
 
+  // Check if messages container exists before trying to update it
+  if (!messagesDiv) {
+    console.log("[DEBUG messages] Messages container not found, skipping load")
+    return
+  }
+
   if (!messages || messages.length === 0) {
     messagesDiv.innerHTML = ""
     return
+  }
+  
+  // Debug: Log first message to see what data we're getting
+  if (messages.length > 0) {
+    console.log("[DEBUG messages] First message data:", JSON.stringify(messages[0], null, 2))
+    console.log("[DEBUG messages] First message has message_color?", "message_color" in messages[0])
+    console.log("[DEBUG messages] First message message_color value:", messages[0].message_color)
+    console.log("[DEBUG messages] Current user color from state:", state.CURRENT_USER_MESSAGE_COLOR)
+    console.log("[DEBUG messages] Current user color from localStorage:", localStorage.getItem("messageColor"))
   }
 
   // Clear messages container
@@ -71,22 +137,86 @@ export async function loadMessages() {
 
     if (msg.sender_id === state.CURRENT_USER_ID) {
       row.className = "message-row outgoing-row"
-      // Get user's message color (from state or localStorage, default to grey)
-      const messageColor = state.CURRENT_USER_MESSAGE_COLOR || localStorage.getItem("messageColor") || "#6b7280"
-      row.innerHTML = `
-        <div class="message outgoing" style="background: ${messageColor};">
-          <p class="text">${msg.content}</p>
-        </div>
-        <img class="message-avatar" src="${avatarSrc}" alt="Avatar" onerror="this.src='/static/avatars/default.png'">
+      // Get message color from database (stored with message) or fallback to user's current color
+      // Priority: 1. message_color from DB, 2. current user's color from state, 3. localStorage, 4. default
+      const messageColor = msg.message_color || state.CURRENT_USER_MESSAGE_COLOR || localStorage.getItem("messageColor") || "#6b7280"
+      console.log(`[DEBUG messages] Outgoing message ${msg.id}:`, {
+        msg_message_color: msg.message_color,
+        state_color: state.CURRENT_USER_MESSAGE_COLOR,
+        localStorage_color: localStorage.getItem("messageColor"),
+        final_color: messageColor,
+        full_msg: msg
+      })
+      // Create elements and set styles directly to ensure they apply
+      const messageDiv = document.createElement("div")
+      messageDiv.className = "message outgoing"
+      // Use appropriate text color based on background brightness
+      const textColor = getTextColor(messageColor)
+      const isLight = isLightColor(messageColor)
+      console.log(`[DEBUG messages] Outgoing - Color: ${messageColor}, isLight: ${isLight}, textColor: ${textColor}`)
+      // Set all styles using cssText for maximum override
+      messageDiv.style.cssText = `
+        background: ${messageColor} !important;
+        background-image: none !important;
+        background-color: ${messageColor} !important;
+        color: ${textColor} !important;
       `
+      // Also set on the text element itself to ensure it applies
+      const textP = document.createElement("p")
+      textP.className = "text"
+      textP.style.cssText = `color: ${textColor} !important; margin: 0; padding: 0;`
+      textP.textContent = msg.content
+      messageDiv.appendChild(textP)
+      
+      const avatarImg = document.createElement("img")
+      avatarImg.className = "message-avatar"
+      avatarImg.src = avatarSrc
+      avatarImg.alt = "Avatar"
+      avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+      
+      row.appendChild(messageDiv)
+      row.appendChild(avatarImg)
     } else {
       row.className = "message-row incoming-row"
-      row.innerHTML = `
-        <img class="message-avatar" src="${avatarSrc}" alt="Avatar" onerror="this.src='/static/avatars/default.png'">
-        <div class="message incoming">
-          <p class="text">${msg.content}</p>
-        </div>
+      // For incoming messages, use the sender's message color from database
+      // This allows everyone to see the color the sender chose
+      const messageColor = msg.message_color || "#6b7280"  // Default grey if not set
+      console.log(`[DEBUG messages] Incoming message ${msg.id}:`, {
+        msg_message_color: msg.message_color,
+        final_color: messageColor,
+        full_msg: msg
+      })
+      // Create elements and set styles directly
+      const avatarImg = document.createElement("img")
+      avatarImg.className = "message-avatar"
+      avatarImg.src = avatarSrc
+      avatarImg.alt = "Avatar"
+      avatarImg.onerror = function() { this.src = '/static/avatars/default.png' }
+      
+      // Use appropriate text color based on background brightness
+      const textColor = getTextColor(messageColor)
+      const isLight = isLightColor(messageColor)
+      console.log(`[DEBUG messages] Incoming - Color: ${messageColor}, isLight: ${isLight}, textColor: ${textColor}`)
+      
+      const messageDiv = document.createElement("div")
+      messageDiv.className = "message incoming"
+      // Set all styles using cssText for maximum override
+      messageDiv.style.cssText = `
+        background: ${messageColor} !important;
+        background-image: none !important;
+        background-color: ${messageColor} !important;
+        color: ${textColor} !important;
       `
+      
+      // Also set on the text element itself to ensure it applies
+      const textP = document.createElement("p")
+      textP.className = "text"
+      textP.style.cssText = `color: ${textColor} !important; margin: 0; padding: 0;`
+      textP.textContent = msg.content
+      messageDiv.appendChild(textP)
+      
+      row.appendChild(avatarImg)
+      row.appendChild(messageDiv)
     }
     
     // Track image loads for scroll timing

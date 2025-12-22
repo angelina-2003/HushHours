@@ -22,9 +22,27 @@ const MESSAGE_COLORS = [
   { name: "Emerald", value: "#10b981", class: "color-emerald" },
   { name: "Sky", value: "#0ea5e9", class: "color-sky" },
   { name: "Fuchsia", value: "#d946ef", class: "color-fuchsia" },
-  { name: "Slate", value: "#64748b", class: "color-slate" },
   { name: "Gray", value: "#6b7280", class: "color-gray" },
-  { name: "Zinc", value: "#71717a", class: "color-zinc" }
+  { name: "Coral", value: "#ff6b6b", class: "color-coral" },
+  { name: "Mint", value: "#00d4aa", class: "color-mint" },
+  { name: "Lavender", value: "#b794f6", class: "color-lavender" },
+  { name: "Peach", value: "#ff9a56", class: "color-peach" },
+  { name: "Turquoise", value: "#40e0d0", class: "color-turquoise" },
+  { name: "Magenta", value: "#e91e63", class: "color-magenta" },
+  { name: "Gold", value: "#ffd700", class: "color-gold" },
+  { name: "Navy", value: "#1e3a8a", class: "color-navy" },
+  { name: "Olive", value: "#808000", class: "color-olive" },
+  { name: "Maroon", value: "#800000", class: "color-maroon" },
+  { name: "Aqua", value: "#00ffff", class: "color-aqua" },
+  { name: "Salmon", value: "#fa8072", class: "color-salmon" },
+  { name: "Plum", value: "#dda0dd", class: "color-plum" },
+  { name: "Khaki", value: "#f0e68c", class: "color-khaki" },
+  { name: "Crimson", value: "#dc143c", class: "color-crimson" },
+  { name: "Forest", value: "#228b22", class: "color-forest" },
+  { name: "Royal", value: "#4169e1", class: "color-royal" },
+  { name: "Coral Pink", value: "#ff7f7f", class: "color-coral-pink" },
+  { name: "Mint Green", value: "#98fb98", class: "color-mint-green" },
+  { name: "Periwinkle", value: "#ccccff", class: "color-periwinkle" }
 ]
 
 export async function renderSettings() {
@@ -188,10 +206,14 @@ export async function renderSettings() {
     </div>
   `
   
-  setupSettingsListeners()
+  setupSettingsListeners(savedColor)
 }
 
-function setupSettingsListeners() {
+function setupSettingsListeners(savedColor) {
+  // If savedColor not provided, get from localStorage or use default
+  if (!savedColor) {
+    savedColor = localStorage.getItem("messageColor") || "#6b7280"
+  }
   // Edit Profile
   const editProfileBtn = document.getElementById("edit-profile-btn")
   if (editProfileBtn) {
@@ -224,94 +246,70 @@ function setupSettingsListeners() {
     }
   }
   
-  // Color selection - setup immediately and also after a delay to ensure DOM is ready
+  // Store selectedColor in closure
+  let selectedColor = savedColor
+  window.selectedMessageColor = selectedColor
+  
+  // Color selection - simplified direct approach
   function setupColorSelection() {
     const colorOptions = document.querySelectorAll(".color-option")
-    let selectedColor = savedColor
     
     console.log("[DEBUG settings] Found", colorOptions.length, "color options")
     console.log("[DEBUG settings] Initial selected color:", selectedColor)
     
     if (colorOptions.length === 0) {
-      console.warn("[DEBUG settings] No color options found, retrying...")
+      console.warn("[DEBUG settings] No color options found")
       return false
     }
     
     colorOptions.forEach((option, index) => {
-      // Remove any existing listeners by cloning
-      const newOption = option.cloneNode(true)
-      option.parentNode.replaceChild(newOption, option)
-      const optionRef = newOption
-      
-      // Make sure it's clickable with !important styles
-      optionRef.style.setProperty("pointer-events", "auto", "important")
-      optionRef.style.setProperty("cursor", "pointer", "important")
-      optionRef.style.setProperty("position", "relative", "important")
-      optionRef.style.setProperty("z-index", "100", "important")
-      
       // Get the color value
-      const colorValue = optionRef.dataset.color || optionRef.getAttribute("data-color")
+      const colorValue = option.dataset.color || option.getAttribute("data-color")
       const isCurrentlySelected = selectedColor === colorValue
       
-      console.log(`[DEBUG settings] Color option ${index}: ${colorValue}, selected: ${isCurrentlySelected}`)
+      console.log(`[DEBUG settings] Setting up color option ${index}: ${colorValue}`)
       
-      // Set up click handler
-      const handleClick = (e) => {
+      // Set up simple onclick handler
+      option.onclick = function(e) {
         e.preventDefault()
         e.stopPropagation()
-        e.stopImmediatePropagation()
         
-        console.log("[DEBUG settings] Color clicked:", colorValue, "Event:", e)
+        console.log("[DEBUG settings] Color clicked:", colorValue)
         
         // Remove selected class from all
-        const allOptions = document.querySelectorAll(".color-option")
-        allOptions.forEach(opt => {
+        colorOptions.forEach(opt => {
           opt.classList.remove("selected")
           const icon = opt.querySelector("i")
           if (icon) {
-            icon.style.setProperty("opacity", "0", "important")
-            icon.style.setProperty("display", "block", "important")
+            icon.style.opacity = "0"
           }
         })
         
         // Add selected class to clicked
-        optionRef.classList.add("selected")
+        this.classList.add("selected")
         selectedColor = colorValue
         window.selectedMessageColor = colorValue
         
         // Force show the checkmark
-        const icon = optionRef.querySelector("i")
+        const icon = this.querySelector("i")
         if (icon) {
-          icon.style.setProperty("opacity", "1", "important")
-          icon.style.setProperty("display", "block", "important")
-          icon.style.setProperty("visibility", "visible", "important")
+          icon.style.opacity = "1"
+          icon.style.display = "block"
+          icon.style.visibility = "visible"
         }
         
         console.log("[DEBUG settings] Color selected:", selectedColor)
-        console.log("[DEBUG settings] Selected class added:", optionRef.classList.contains("selected"))
-        console.log("[DEBUG settings] Icon opacity:", icon ? icon.style.opacity : "no icon")
+        console.log("[DEBUG settings] Has selected class:", this.classList.contains("selected"))
       }
-      
-      // Use multiple event types for maximum compatibility
-      optionRef.addEventListener("click", handleClick, { capture: true })
-      optionRef.addEventListener("mousedown", (e) => {
-        e.preventDefault()
-        handleClick(e)
-      }, { capture: true })
-      optionRef.addEventListener("touchend", (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        handleClick(e)
-      }, { capture: true })
       
       // Ensure checkmark is visible if this is the selected color
       if (isCurrentlySelected) {
-        optionRef.classList.add("selected")
-        const icon = optionRef.querySelector("i")
+        option.classList.add("selected")
+        const icon = option.querySelector("i")
         if (icon) {
-          icon.style.setProperty("opacity", "1", "important")
-          icon.style.setProperty("display", "block", "important")
-          icon.style.setProperty("visibility", "visible", "important")
+          icon.style.opacity = "1"
+          icon.style.display = "block"
+          icon.style.visibility = "visible"
         }
       }
     })
@@ -319,22 +317,34 @@ function setupSettingsListeners() {
     return true
   }
   
-  // Try to setup immediately
-  if (!setupColorSelection()) {
-    // If it fails, try again after a delay
+  // Setup when modal opens
+  if (messageColorModal) {
+    // Setup immediately
     setTimeout(() => {
       setupColorSelection()
-    }, 100)
+    }, 50)
     
-    // And one more time after modal animation
-    setTimeout(() => {
-      setupColorSelection()
-    }, 300)
+    // Also setup when modal is displayed
+    const observer = new MutationObserver(() => {
+      if (messageColorModal.style.display === "flex") {
+        setTimeout(() => {
+          setupColorSelection()
+        }, 100)
+      }
+    })
+    observer.observe(messageColorModal, { attributes: true, attributeFilter: ["style"] })
+    
+    // Also setup on click of the message color button
+    if (messageColorBtn) {
+      const originalOnClick = messageColorBtn.onclick
+      messageColorBtn.onclick = () => {
+        if (originalOnClick) originalOnClick()
+        setTimeout(() => {
+          setupColorSelection()
+        }, 200)
+      }
+    }
   }
-  
-  // Store selectedColor in closure
-  let selectedColor = savedColor
-  window.selectedMessageColor = selectedColor
   
   // Setup save button handler
   function setupSaveButton() {
@@ -351,7 +361,7 @@ function setupSettingsListeners() {
         
         // Get current selected color from DOM
         const selectedOption = document.querySelector(".color-option.selected")
-        const currentSelectedColor = selectedOption ? (selectedOption.dataset.color || selectedOption.getAttribute("data-color")) : (window.selectedMessageColor || savedColor)
+        const currentSelectedColor = selectedOption ? (selectedOption.dataset.color || selectedOption.getAttribute("data-color")) : (window.selectedMessageColor || localStorage.getItem("messageColor") || "#6b7280")
         
         if (!currentSelectedColor) {
           console.error("[DEBUG settings] No color selected")
@@ -373,15 +383,30 @@ function setupSettingsListeners() {
             window.selectedMessageColor = currentSelectedColor
             
             // Reload messages if a chat is open to apply new color
+            // Only reload if the messages container exists (user is viewing a chat)
             if (state.ACTIVE_CONVERSATION_ID) {
-              const { loadMessages } = await import("./messages.js")
-              await loadMessages()
+              try {
+                const messagesDiv = document.getElementById("messages")
+                if (messagesDiv) {
+                  const { loadMessages } = await import("./messages.js")
+                  await loadMessages()
+                }
+              } catch (error) {
+                console.log("[DEBUG settings] Could not reload messages (chat not open):", error)
+              }
             }
             
             // Reload group messages if a group chat is open
             if (state.ACTIVE_GROUP_ID) {
-              const { loadGroupMessages } = await import("./groupMessages.js")
-              await loadGroupMessages(state.ACTIVE_GROUP_ID)
+              try {
+                const groupMessagesDiv = document.getElementById("group-messages")
+                if (groupMessagesDiv) {
+                  const { loadGroupMessages } = await import("./groupMessages.js")
+                  await loadGroupMessages(state.ACTIVE_GROUP_ID)
+                }
+              } catch (error) {
+                console.log("[DEBUG settings] Could not reload group messages (group chat not open):", error)
+              }
             }
             
             if (messageColorModal) messageColorModal.style.display = "none"

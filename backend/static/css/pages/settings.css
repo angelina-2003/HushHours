@@ -132,14 +132,15 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-.settings-modal:not(.settings-modal-content):not(.color-option) {
-  pointer-events: auto;
-}
-
 .settings-modal-content {
   pointer-events: auto;
   position: relative;
   z-index: 1001;
+}
+
+/* Prevent modal backdrop from intercepting clicks on content */
+.settings-modal-content * {
+  pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -243,9 +244,10 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   touch-action: manipulation;
-  z-index: 100 !important;
-  pointer-events: auto !important;
+  z-index: 100;
+  pointer-events: auto;
   background-color: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .color-option::before {

@@ -194,39 +194,81 @@ def get_messages_for_conversation(conversation_id):
     conn = get_connection()
     cur = conn.cursor()
 
+    # Check if message_color column exists
+    cur.execute("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name='messages' AND column_name='message_color'
+    """)
+    message_color_column_exists = cur.fetchone() is not None
+    
     # CRITICAL: Order by timestamp ASC (oldest first), then by id ASC (earlier messages first)
     # This ensures messages appear in chronological order from top to bottom
-    cur.execute("""
-        SELECT 
-            m.id, 
-            m.sender_id, 
-            m.content, 
-            m.timestamp,
-            u.avatar_key
-        FROM messages m
-        JOIN users u ON u.id = m.sender_id
-        WHERE m.conversation_id = %s
-        ORDER BY 
-            COALESCE(m.timestamp, '1970-01-01'::timestamp) ASC,
-            m.id ASC
-    """, (conversation_id,))
+    if message_color_column_exists:
+        cur.execute("""
+            SELECT 
+                m.id, 
+                m.sender_id, 
+                m.content, 
+                m.timestamp,
+                u.avatar_key,
+                COALESCE(m.message_color, '#6b7280') AS message_color
+            FROM messages m
+            JOIN users u ON u.id = m.sender_id
+            WHERE m.conversation_id = %s
+            ORDER BY 
+                COALESCE(m.timestamp, '1970-01-01'::timestamp) ASC,
+                m.id ASC
+        """, (conversation_id,))
+    else:
+        cur.execute("""
+            SELECT 
+                m.id, 
+                m.sender_id, 
+                m.content, 
+                m.timestamp,
+                u.avatar_key
+            FROM messages m
+            JOIN users u ON u.id = m.sender_id
+            WHERE m.conversation_id = %s
+            ORDER BY 
+                COALESCE(m.timestamp, '1970-01-01'::timestamp) ASC,
+                m.id ASC
+        """, (conversation_id,))
 
     rows = cur.fetchall()
     cur.close()
     conn.close()
 
+    print(f"[DEBUG chat_service] message_color_column_exists: {message_color_column_exists}")
+    print(f"[DEBUG chat_service] Fetched {len(rows)} messages")
+    if rows and len(rows) > 0:
+        print(f"[DEBUG chat_service] First row length: {len(rows[0])}, columns: {rows[0]}")
+
     # Convert directly to JSON format - SQL already sorted correctly
     messages = []
     for row in rows:
         timestamp = row[3]
-        messages.append({
+        message_data = {
             "id": row[0],
             "sender_id": row[1],
             "content": row[2],
             "created_at": timestamp.isoformat() if timestamp else None,
             "timestamp": timestamp.isoformat() if timestamp else None,
             "sender_avatar": row[4]
-        })
+        }
+        # Add message_color if column exists
+        if message_color_column_exists and len(row) > 5:
+            message_data["message_color"] = row[5] if row[5] else "#6b7280"
+            print(f"[DEBUG chat_service] Message {row[0]} - message_color from DB: '{row[5]}' (type: {type(row[5])})")
+        else:
+            message_data["message_color"] = "#6b7280"  # Default grey
+            if not message_color_column_exists:
+                print(f"[DEBUG chat_service] Message {row[0]} - message_color column doesn't exist in DB, using default")
+            else:
+                print(f"[DEBUG chat_service] Message {row[0]} - row length is {len(row)}, expected > 5, using default")
+        
+        messages.append(message_data)
 
     # Debug: Log first and last message to verify order
     if messages:

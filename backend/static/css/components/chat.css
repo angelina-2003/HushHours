@@ -229,6 +229,8 @@ img.message-avatar,
 .message .text {
   margin: 0;
   padding: 0;
+  /* Allow inline styles to override text color */
+  color: inherit;
 }
 
 .message-sender {
@@ -240,17 +242,40 @@ img.message-avatar,
 }
 
 .message.incoming {
+  /* Default light background, but can be overridden by inline style for custom colors */
   background: rgba(148, 163, 184, 0.15);
   color: var(--text-primary);
   border-top-left-radius: var(--spacing-xs);
+  /* Match outgoing message padding - no extra padding */
+  padding: 8px 16px 6px 16px;
+}
+
+/* Remove the forced white text - let inline styles control it */
+.message.incoming[style*="background"] {
+  /* Don't force color here - let inline style handle it */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .message.outgoing {
   /* Default gradient, but can be overridden by inline style for custom colors */
   background: var(--gradient-primary);
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   color: var(--text-white);
   border-top-right-radius: var(--spacing-xs);
 }
+
+/* Override gradient when inline style is present */
+.message.outgoing[style*="background"] {
+  background-image: none !important;
+}
+
+/* Remove forced white text - let inline styles control it */
+.message.outgoing[style*="color"] {
+  /* Inline style will override */
+}
+
+/* Inline styles with !important will override default backgrounds */
+/* The inline style="background: #color !important;" in the HTML takes precedence */
 
 .message.outgoing .message-sender {
   color: rgba(255, 255, 255, 0.7);

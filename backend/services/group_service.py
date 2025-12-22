@@ -206,23 +206,49 @@ def get_group_messages(group_id, user_id):
             conn.close()
             return None  # Group doesn't exist
         
+        # Check if message_color column exists
+        cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='group_messages' AND column_name='message_color'
+        """)
+        message_color_column_exists = cur.fetchone() is not None
+        
         # Allow viewing messages even if not a member (for public groups)
         # Get messages
-        cur.execute("""
-            SELECT 
-                gm.id,
-                gm.group_id,
-                gm.sender_id,
-                gm.content,
-                gm.timestamp,
-                u.username,
-                u.display_name,
-                u.avatar_key
-            FROM group_messages gm
-            JOIN users u ON gm.sender_id = u.id
-            WHERE gm.group_id = %s
-            ORDER BY gm.timestamp ASC
-        """, (group_id,))
+        if message_color_column_exists:
+            cur.execute("""
+                SELECT 
+                    gm.id,
+                    gm.group_id,
+                    gm.sender_id,
+                    gm.content,
+                    gm.timestamp,
+                    u.username,
+                    u.display_name,
+                    u.avatar_key,
+                    COALESCE(gm.message_color, '#6b7280') AS message_color
+                FROM group_messages gm
+                JOIN users u ON gm.sender_id = u.id
+                WHERE gm.group_id = %s
+                ORDER BY gm.timestamp ASC
+            """, (group_id,))
+        else:
+            cur.execute("""
+                SELECT 
+                    gm.id,
+                    gm.group_id,
+                    gm.sender_id,
+                    gm.content,
+                    gm.timestamp,
+                    u.username,
+                    u.display_name,
+                    u.avatar_key
+                FROM group_messages gm
+                JOIN users u ON gm.sender_id = u.id
+                WHERE gm.group_id = %s
+                ORDER BY gm.timestamp ASC
+            """, (group_id,))
 
         rows = cur.fetchall()
         cur.close()
@@ -230,7 +256,7 @@ def get_group_messages(group_id, user_id):
 
         messages = []
         for row in rows:
-            messages.append({
+            message_data = {
                 "id": row[0],
                 "group_id": row[1],
                 "sender_id": row[2],
@@ -239,7 +265,14 @@ def get_group_messages(group_id, user_id):
                 "sender_username": row[5],
                 "sender_display_name": row[6] or row[5],
                 "sender_avatar": row[7]
-            })
+            }
+            # Add message_color if column exists
+            if message_color_column_exists and len(row) > 8:
+                message_data["message_color"] = row[8] if row[8] else "#6b7280"
+            else:
+                message_data["message_color"] = "#6b7280"  # Default grey
+            
+            messages.append(message_data)
 
         return messages
     except Exception as e:
@@ -269,25 +302,76 @@ def send_group_message(group_id, sender_id, content):
             conn.close()
             return None  # User is not a member
 
-        # Insert message
+        # Get user's message color
         cur.execute("""
-            INSERT INTO group_messages (group_id, sender_id, content, timestamp)
-            VALUES (%s, %s, %s, NOW())
-            RETURNING id, group_id, sender_id, content, timestamp
-        """, (group_id, sender_id, content))
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='users' AND column_name='message_color'
+        """)
+        color_column_exists = cur.fetchone() is not None
+        
+        message_color = "#6b7280"  # Default grey
+        if color_column_exists:
+            cur.execute("SELECT message_color FROM users WHERE id = %s", (sender_id,))
+            result = cur.fetchone()
+            if result and result[0]:
+                message_color = result[0]
+        
+        # Check if message_color column exists in group_messages table
+        cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='group_messages' AND column_name='message_color'
+        """)
+        message_color_column_exists = cur.fetchone() is not None
+        
+        # Insert message with color if column exists
+        if message_color_column_exists:
+            cur.execute("""
+                INSERT INTO group_messages (group_id, sender_id, content, timestamp, message_color)
+                VALUES (%s, %s, %s, NOW(), %s)
+                RETURNING id, group_id, sender_id, content, timestamp, message_color
+            """, (group_id, sender_id, content, message_color))
+            print(f"[DEBUG group_service] Saved group message with color: {message_color}")
+        else:
+            # Try to create the column if it doesn't exist
+            try:
+                cur.execute("ALTER TABLE group_messages ADD COLUMN message_color VARCHAR(7) DEFAULT '#6b7280'")
+                conn.commit()
+                print(f"[DEBUG group_service] Created message_color column, now inserting with color: {message_color}")
+                cur.execute("""
+                    INSERT INTO group_messages (group_id, sender_id, content, timestamp, message_color)
+                    VALUES (%s, %s, %s, NOW(), %s)
+                    RETURNING id, group_id, sender_id, content, timestamp, message_color
+                """, (group_id, sender_id, content, message_color))
+            except Exception as e:
+                print(f"[DEBUG group_service] Could not create column or insert with color: {e}")
+                cur.execute("""
+                    INSERT INTO group_messages (group_id, sender_id, content, timestamp)
+                    VALUES (%s, %s, %s, NOW())
+                    RETURNING id, group_id, sender_id, content, timestamp
+                """, (group_id, sender_id, content))
+                print(f"[DEBUG group_service] message_color column doesn't exist, message saved without color")
 
         message = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
 
-        return {
+        message_data = {
             "id": message[0],
             "group_id": message[1],
             "sender_id": message[2],
             "content": message[3],
             "timestamp": message[4].isoformat() if message[4] else None
         }
+        # Add message_color if column exists
+        if message_color_column_exists and len(message) > 5:
+            message_data["message_color"] = message[5] if message[5] else "#6b7280"
+        else:
+            message_data["message_color"] = message_color  # Use the color we stored
+        
+        return message_data
     except Exception as e:
         print(f"[DEBUG group_service] Error sending group message: {e}")
         conn.rollback()

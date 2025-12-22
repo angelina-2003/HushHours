@@ -84,11 +84,55 @@ def send_message():
         conn.close()
         return jsonify({"error": "Conversation not found or access denied"}), 403
 
-    # Insert message
-    cur.execute(
-        "INSERT INTO messages (conversation_id, sender_id, content, timestamp) VALUES (%s, %s, %s, %s)",
-        (conversation_id, user_id, content, datetime.now())
-    )
+    # Get user's message color
+    cur.execute("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name='users' AND column_name='message_color'
+    """)
+    color_column_exists = cur.fetchone() is not None
+    
+    message_color = "#6b7280"  # Default grey
+    if color_column_exists:
+        cur.execute("SELECT message_color FROM users WHERE id = %s", (user_id,))
+        result = cur.fetchone()
+        if result and result[0]:
+            message_color = result[0]
+    
+    # Check if message_color column exists in messages table
+    cur.execute("""
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name='messages' AND column_name='message_color'
+    """)
+    message_color_column_exists = cur.fetchone() is not None
+    
+    # Insert message with color if column exists
+    if message_color_column_exists:
+        cur.execute(
+            "INSERT INTO messages (conversation_id, sender_id, content, timestamp, message_color) VALUES (%s, %s, %s, %s, %s)",
+            (conversation_id, user_id, content, datetime.now(), message_color)
+        )
+        print(f"[DEBUG chat_routes] Saved message with color: {message_color} (user_id: {user_id})")
+        print(f"[DEBUG chat_routes] message_color_column_exists: {message_color_column_exists}")
+    else:
+        # Try to create the column if it doesn't exist
+        try:
+            cur.execute("ALTER TABLE messages ADD COLUMN message_color VARCHAR(7) DEFAULT '#6b7280'")
+            conn.commit()
+            print(f"[DEBUG chat_routes] Created message_color column, now inserting with color: {message_color}")
+            cur.execute(
+                "INSERT INTO messages (conversation_id, sender_id, content, timestamp, message_color) VALUES (%s, %s, %s, %s, %s)",
+                (conversation_id, user_id, content, datetime.now(), message_color)
+            )
+        except Exception as e:
+            print(f"[DEBUG chat_routes] Could not create column or insert with color: {e}")
+            cur.execute(
+                "INSERT INTO messages (conversation_id, sender_id, content, timestamp) VALUES (%s, %s, %s, %s)",
+                (conversation_id, user_id, content, datetime.now())
+            )
+            print(f"[DEBUG chat_routes] message_color column doesn't exist, message saved without color")
+    
     conn.commit()
     cur.close()
     conn.close()
