@@ -274,7 +274,16 @@
   transition: transform var(--transition-base);
 }
 
-.gift-item:hover .gift-emoji {
+.gift-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  display: block;
+  transition: transform var(--transition-base);
+}
+
+.gift-item:hover .gift-emoji,
+.gift-item:hover .gift-image {
   transform: scale(1.2) rotate(10deg);
 }
 
@@ -595,6 +604,11 @@
   
   .gift-emoji {
     font-size: 28px;
+  }
+  
+  .gift-image {
+    width: 32px;
+    height: 32px;
   }
   
   .link-container {

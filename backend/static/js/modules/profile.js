@@ -45,8 +45,13 @@ export async function renderProfile() {
   // Generate personal link
   const personalLink = `${window.location.origin}/profile/${userData.username}`
   
-  // Available gift types
-  const giftTypes = ["🎁", "💝", "🌹", "⭐"]
+  // Available gift types (using PNG images)
+  const giftTypes = [
+    { emoji: "🎁", image: "letter.png", name: "letter" },
+    { emoji: "💝", image: "clove.png", name: "clove" },
+    { emoji: "🌹", image: "goldenheart.png", name: "goldenheart" },
+    { emoji: "⭐", image: "pearl.png", name: "pearl" }
+  ]
   
   // Get gift counts from user data (default to 0 if not present)
   const giftCounts = userData.gifts || {}
@@ -155,10 +160,12 @@ export async function renderProfile() {
         <h3 class="gifts-title">Gifts Received</h3>
         <div class="gifts-grid">
           ${giftTypes.map(giftType => {
-            const count = giftCounts[giftType] || 0
+            // Check for count using both emoji key (for backward compatibility) and image name
+            const count = giftCounts[giftType.emoji] || giftCounts[giftType.name] || giftCounts[giftType.image] || 0
             return `
               <div class="gift-item">
-                <span class="gift-emoji">${giftType}</span>
+                <img class="gift-image" src="/static/gifts/${giftType.image}" alt="${giftType.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span class="gift-emoji" style="display:none;">${giftType.emoji}</span>
                 <span class="gift-count">${count}</span>
               </div>
             `
